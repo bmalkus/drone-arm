@@ -1,0 +1,17 @@
+CMSIS/
+LinkerScript.ld
+HelloWorld Debug.cfg
+*.html
+*.chm
+
+.cproject
+.project
+.settings/
+Debug
+Release/
+
+.DS_Store
+
+*.xml
+
+.ycm_extra_conf.py
