@@ -3,13 +3,18 @@
 #include <cstring>
 
 USART::USART(USART_TypeDef *USART, uint32_t baud_rate, bool async):
-  _USART(USART), _async(async)
+  _USART(USART), _baud_rate(baud_rate), _async(async)
+{
+  // empty
+}
+
+void USART::init()
 {
   // Disable USART
   CLEAR_BIT(_USART->CR1, USART_CR1_UE);
 
   // Configure baud rate
-  uint32_t usartdiv = (45000000u * 25u) / (4u * baud_rate); // (f_apb1 / (16 * baud)) * 100
+  uint32_t usartdiv = (45000000u * 25u) / (4u * _baud_rate); // (f_apb1 / (16 * baud)) * 100
   uint32_t mant = usartdiv / 100u;
   uint32_t frac = (((usartdiv - (mant * 100u)) * 16u) + 50u) / 100U;
   mant += frac / 16u;
@@ -32,7 +37,7 @@ USART::USART(USART_TypeDef *USART, uint32_t baud_rate, bool async):
   SET_BIT(_USART->CR1, USART_CR1_UE);
 }
 
-void USART::handle_event()
+void USART::handle_event(HandlerHelper::InterruptType /*itype*/)
 {
   SET_BIT(GPIOA->ODR, GPIO_ODR_OD5);
   if (!is_locked())

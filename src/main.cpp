@@ -16,9 +16,33 @@
 
 #include <cstdio>
 
+
+USART uart_usb(USART2, 115200, true);
+I2C mpu(I2C1);
+
 extern "C" void SysTick_Handler()
 {
   return;
+}
+
+uint8_t data1[10];
+uint8_t data2[10];
+uint8_t *reading = data1;
+
+void read_cb()
+{
+  if (reading == data1)
+    reading = data2;
+  else
+    reading = data1;
+}
+
+void cb()
+{
+  if (reading == data1)
+    mpu.read(data1, 2, &read_cb);
+  else
+    mpu.read(data2, 2, &read_cb);
 }
 
 int main(void)
@@ -107,8 +131,7 @@ int main(void)
   MODIFY_REG(SYSCFG->EXTICR[3], SYSCFG_EXTICR4_EXTI13, SYSCFG_EXTICR4_EXTI13_PC);
 
   NVIC_EnableIRQ(USART2_IRQn);
-
-  USART uart_usb(USART2, 115200);
+  NVIC_EnableIRQ(I2C1_EV_IRQn);
 
   // char msg[] = "mąka źdźbło\r\n";
 
@@ -125,8 +148,6 @@ int main(void)
   MODIFY_REG(GPIOB->OSPEEDR, GPIO_OSPEEDR_OSPEED9, 0b11 << GPIO_OSPEEDR_OSPEED9_Pos);
   MODIFY_REG(GPIOB->AFR[1], GPIO_AFRH_AFSEL9, 0b0100 << GPIO_AFRH_AFSEL9_Pos);
 
-  I2C mpu(I2C1);
-
   // MODIFY_REG(I2C1->CR2, I2C_CR2_FREQ, 45 << I2C_CR2_FREQ_Pos);
   // MODIFY_REG(I2C1->TRISE, I2C_TRISE_TRISE, 0x2E << I2C_TRISE_TRISE_Pos);
   // SET_BIT(I2C1->CCR, I2C_CCR_FS);
@@ -138,11 +159,14 @@ int main(void)
   // SET_BIT(I2C1->CR1, I2C_CR1_START);
   // READ_BIT(I2C1->CR1, I2C_CR1_START);
 
+  uart_usb.init();
+  // uart_usb.send('0');
+
   mpu.init(45, false, 100);
   mpu.set_addr(0b1101000);
 
   uint8_t data[] = {0x6B, 0b00000011};
-  uart_usb.send(mpu.send(data, 2) + '0');
+  mpu.send(data, 2, true);
 
   for(;;)
   {
@@ -159,7 +183,7 @@ int main(void)
     // if (READ_BIT(I2C1->SR1, I2C_SR1_SB))
     //   I2C1->DR = 0b11010001;
 
-    Delay(150);
+    Delay(30);
 
 //     if(READ_BIT(I2C1->SR1, I2C_SR1_ADDR))
 //       I2C1->SR2;
@@ -167,11 +191,12 @@ int main(void)
     // Delay(150);
 
     // uart_usb.send(mpu.send(0x00) + '0');
-    uint8_t r[10] = {0, 0};
+    // uint8_t r[10] = {0, 0};
+    if (!mpu.is_sending())
+      mpu.send(0x43, false, &cb);
     char str[100];
-    mpu.send(0x43, false);
-    mpu.read(r, 2);
-    sprintf(str, "%d\n", int16_t((int16_t(r[0]) << 8) | r[1]));
+    // mpu.read(r, 2);
+    sprintf(str, "%d\n", int16_t((int16_t(reading[0]) << 8) | reading[1]));
     uart_usb.send(str);
   }
 

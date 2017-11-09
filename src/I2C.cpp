@@ -1,6 +1,9 @@
 #include <I2C.h>
 
 #include <utils.h>
+#include <USART.h>
+
+extern USART uart_usb;
 
 I2C::I2C(I2C_TypeDef *I2C):
   _I2C(I2C)
@@ -39,77 +42,106 @@ void I2C::init(uint32_t APB_freq_MHz, bool fs, uint8_t I2C_freq_kHz)
 
   SET_BIT(_I2C->CR1, I2C_CR1_PE);
   READ_BIT(_I2C->CR1, I2C_CR1_PE);
+
+  HandlerHelper::add_handler(HandlerHelper::I2C1_EV_INT, this);
 }
 
 void I2C::set_addr(uint8_t addr)
 {
-  _addr = addr << 1;
+  _slave_addr = addr << 1;
 }
 
-bool I2C::send(uint8_t byte, bool do_stop_cond)
+void I2C::handle_event(HandlerHelper::InterruptType itype)
 {
-  start_cond(WRITE);
-  while (!READ_BIT(_I2C->SR1, I2C_SR1_TXE))
-    ;
-  _I2C->DR = byte;
-  while (!READ_BIT(_I2C->SR1, I2C_SR1_BTF))
-    ;
-  if (do_stop_cond)
-    stop_cond();
-  return true;
-}
-
-bool I2C::send(const uint8_t *bytes, uint8_t len, bool do_stop_cond)
-{
-  start_cond(WRITE);
-  for (int i = 0; i < len; ++i)
+  if (itype == HandlerHelper::I2C1_EV_INT)
   {
-    while (!READ_BIT(_I2C->SR1, I2C_SR1_TXE))
-      ;
-    _I2C->DR = bytes[i];
+    if (READ_BIT(_I2C->SR1, I2C_SR1_SB))
+      _I2C->DR = _slave_addr | _current_rw;
+    else if (READ_BIT(_I2C->SR1, I2C_SR1_ADDR))
+    {
+      _I2C->SR2;
+      if (_current_rw == READ && _len > 1)
+        SET_BIT(_I2C->CR1, I2C_CR1_ACK);
+    }
+    else if (_current_rw == WRITE)
+    {
+      if (READ_BIT(_I2C->SR1, I2C_SR1_TXE))
+      {
+        if (_len > 0)
+        {
+          _len -= 1;
+          _I2C->DR = _to_send == nullptr ? _byte_to_send : *_to_send++;
+          return;
+        }
+      }
+      if (READ_BIT(_I2C->SR1, I2C_SR1_BTF))
+      {
+        if (_do_stop_cond)
+          stop_cond();
+        MODIFY_REG(_I2C->CR2, I2C_CR2_ITBUFEN_Msk | I2C_CR2_ITEVTEN_Msk, 0x0);
+        if (_done_cb != nullptr)
+          _done_cb();
+      }
+    }
+    else if (_current_rw == READ)
+    {
+      if (READ_BIT(_I2C->SR1, I2C_SR1_RXNE))
+      {
+        if (_len == 2)
+          CLEAR_BIT(_I2C->CR1, I2C_CR1_ACK);
+        if (_len > 0)
+        {
+          _len -= 1;
+          *_read_buf++ = _I2C->DR;
+        }
+        if (_len == 0)
+        {
+          stop_cond();
+          MODIFY_REG(_I2C->CR2, I2C_CR2_ITBUFEN_Msk | I2C_CR2_ITEVTEN_Msk, 0x0);
+          if (_done_cb != nullptr)
+            _done_cb();
+        }
+      }
+    }
   }
-  while (!READ_BIT(_I2C->SR1, I2C_SR1_BTF))
-    ;
-  if (do_stop_cond)
-    stop_cond();
+}
+
+bool I2C::send(uint8_t byte, bool do_stop_cond, void (*done_cb)())
+{
+  start_cond(WRITE);
+  _to_send = nullptr;
+  _byte_to_send = byte;
+  _len = 1;
+  _do_stop_cond = do_stop_cond;
+  _done_cb = done_cb;
   return true;
 }
 
-bool I2C::read(uint8_t *buf, int len)
+bool I2C::send(const uint8_t *bytes, uint8_t len, bool do_stop_cond, void (*done_cb)())
+{
+  start_cond(WRITE);
+  _to_send = bytes;
+  _len = len;
+  _do_stop_cond = do_stop_cond;
+  _done_cb = done_cb;
+  return true;
+}
+
+bool I2C::read(uint8_t *buf, int len, void (*done_cb)())
 {
   start_cond(READ);
-  if (len > 1)
-  {
-    SET_BIT(_I2C->CR1, I2C_CR1_ACK);
-  }
-  for (int i = 0; i < len; ++i)
-  {
-    while (!READ_BIT(_I2C->SR1, I2C_SR1_RXNE))
-      ;
-    if (i == len - 2)
-      CLEAR_BIT(_I2C->CR1, I2C_CR1_ACK);
-    *buf = _I2C->DR;
-    ++buf;
-  }
-  stop_cond();
+  _read_buf = buf;
+  _len = len;
+  _done_cb = done_cb;
   return true;
 }
 
-bool I2C::start_cond(RW rw)
+void I2C::start_cond(RW rw)
 {
+  _current_rw = rw;
+  SET_BIT(_I2C->CR2, I2C_CR2_ITBUFEN);
+  SET_BIT(_I2C->CR2, I2C_CR2_ITEVTEN);
   SET_BIT(_I2C->CR1, I2C_CR1_START);
-  READ_BIT(_I2C->CR1, I2C_CR1_START);
-
-  while (!READ_BIT(_I2C->SR1, I2C_SR1_SB))
-    ;
-
-  _I2C->DR = _addr | rw;
-
-  while (!READ_BIT(_I2C->SR1, I2C_SR1_ADDR))
-    ;
-
-  I2C1->SR2;
-  return true;
 }
 
 void I2C::stop_cond()
