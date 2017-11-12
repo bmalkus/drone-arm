@@ -3,7 +3,7 @@
 #include <cstring>
 
 USART::USART(USART_TypeDef *USART, uint32_t baud_rate, bool async):
-  _USART(USART), _baud_rate(baud_rate), _async(async)
+  _USART(USART), _async(async), _baud_rate(baud_rate)
 {
   // empty
 }

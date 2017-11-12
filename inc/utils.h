@@ -11,4 +11,6 @@ inline void Delay(int ms)
       ms--;
 }
 
+// int __io_putchar(int c);
+
 #endif /* UTILS_H */

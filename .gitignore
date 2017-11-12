@@ -1,6 +1,7 @@
 CMSIS/
 LinkerScript.ld
 HelloWorld Debug.cfg
+HelloWorld Run.cfg
 *.html
 *.chm
 

@@ -7,6 +7,8 @@
 
 #include <HandlerHelper.h>
 
+using cb_type = void (*)(void*);
+
 class I2C : public HandlerClass
 {
 public:
@@ -18,10 +20,10 @@ public:
 
   virtual void handle_event(HandlerHelper::InterruptType itype) override;
 
-  bool send(uint8_t byte, bool do_stop_cond=true, void (*done_cb)()=nullptr);
-  bool send(const uint8_t *bytes, uint8_t len, bool do_stop_cond=true, void (*done_cb)()=nullptr);
+  bool send(uint8_t byte, bool do_stop_cond=true, cb_type cb=nullptr, void *user_data=nullptr);
+  bool send(const uint8_t *bytes, uint8_t len, bool do_stop_cond=true, cb_type cb=nullptr, void *user_data=nullptr);
 
-  bool read(uint8_t *buf, int len, void (*done_cb)()=nullptr);
+  bool read(volatile uint8_t *buf, int len, cb_type cb=nullptr, void *user_data=nullptr);
 
   bool is_sending() { return READ_BIT(_I2C->CR2, I2C_CR2_ITBUFEN); }
 
@@ -34,15 +36,16 @@ private:
 
   I2C_TypeDef *_I2C;
   uint8_t _slave_addr;
-  RW _current_rw;
+  volatile RW _current_rw;
 
-  volatile const uint8_t *_to_send;
-  uint8_t _byte_to_send;
+  const uint8_t * volatile _to_send;
+  volatile uint8_t _byte_to_send;
   volatile uint8_t _len;
-  bool _do_stop_cond;
-  void (*_done_cb)();
+  volatile bool _do_stop_cond;
+  volatile cb_type _done_cb;
+  void * volatile _user_data;
 
-  uint8_t *_read_buf;
+  volatile uint8_t * volatile _read_buf;
 
   void start_cond(RW rw);
   void stop_cond();

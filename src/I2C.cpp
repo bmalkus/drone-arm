@@ -80,7 +80,7 @@ void I2C::handle_event(HandlerHelper::InterruptType itype)
           stop_cond();
         MODIFY_REG(_I2C->CR2, I2C_CR2_ITBUFEN_Msk | I2C_CR2_ITEVTEN_Msk, 0x0);
         if (_done_cb != nullptr)
-          _done_cb();
+          _done_cb(_user_data);
       }
     }
     else if (_current_rw == READ)
@@ -99,40 +99,43 @@ void I2C::handle_event(HandlerHelper::InterruptType itype)
           stop_cond();
           MODIFY_REG(_I2C->CR2, I2C_CR2_ITBUFEN_Msk | I2C_CR2_ITEVTEN_Msk, 0x0);
           if (_done_cb != nullptr)
-            _done_cb();
+            _done_cb(_user_data);
         }
       }
     }
   }
 }
 
-bool I2C::send(uint8_t byte, bool do_stop_cond, void (*done_cb)())
+bool I2C::send(uint8_t byte, bool do_stop_cond, cb_type cb, void *user_data)
 {
   start_cond(WRITE);
   _to_send = nullptr;
   _byte_to_send = byte;
   _len = 1;
   _do_stop_cond = do_stop_cond;
-  _done_cb = done_cb;
+  _done_cb = cb;
+  _user_data = user_data;
   return true;
 }
 
-bool I2C::send(const uint8_t *bytes, uint8_t len, bool do_stop_cond, void (*done_cb)())
+bool I2C::send(const uint8_t *bytes, uint8_t len, bool do_stop_cond, cb_type cb, void *user_data)
 {
   start_cond(WRITE);
   _to_send = bytes;
   _len = len;
   _do_stop_cond = do_stop_cond;
-  _done_cb = done_cb;
+  _done_cb = cb;
+  _user_data = user_data;
   return true;
 }
 
-bool I2C::read(uint8_t *buf, int len, void (*done_cb)())
+bool I2C::read(volatile uint8_t *buf, int len, cb_type cb, void *user_data)
 {
   start_cond(READ);
   _read_buf = buf;
   _len = len;
-  _done_cb = done_cb;
+  _done_cb = cb;
+  _user_data = user_data;
   return true;
 }
 

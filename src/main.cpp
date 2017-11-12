@@ -12,6 +12,7 @@
 
 #include <USART.h>
 #include <I2C.h>
+#include <IMU.h>
 #include <utils.h>
 
 #include <cstdio>
@@ -23,26 +24,6 @@ I2C mpu(I2C1);
 extern "C" void SysTick_Handler()
 {
   return;
-}
-
-uint8_t data1[10];
-uint8_t data2[10];
-uint8_t *reading = data1;
-
-void read_cb()
-{
-  if (reading == data1)
-    reading = data2;
-  else
-    reading = data1;
-}
-
-void cb()
-{
-  if (reading == data1)
-    mpu.read(data1, 2, &read_cb);
-  else
-    mpu.read(data2, 2, &read_cb);
 }
 
 int main(void)
@@ -159,44 +140,24 @@ int main(void)
   // SET_BIT(I2C1->CR1, I2C_CR1_START);
   // READ_BIT(I2C1->CR1, I2C_CR1_START);
 
+  IMU imu(&mpu);
+
   uart_usb.init();
-  // uart_usb.send('0');
 
-  mpu.init(45, false, 100);
-  mpu.set_addr(0b1101000);
+  imu.init();
 
-  uint8_t data[] = {0x6B, 0b00000011};
-  mpu.send(data, 2, true);
+  Delay(30);
 
   for(;;)
   {
-    // while (uart_usb.is_sending())
-    //   ;
-    // uart_usb.send(READ_BIT(I2C1->SR1, I2C_SR1_SB) + '0');
-    // while (uart_usb.is_sending())
-    //   ;
-    // uart_usb.send(READ_BIT(I2C1->SR1, I2C_SR1_ADDR) + '0');
-    // while (uart_usb.is_sending())
-    //   ;
-    // uart_usb.send("\r\n");
-
-    // if (READ_BIT(I2C1->SR1, I2C_SR1_SB))
-    //   I2C1->DR = 0b11010001;
-
     Delay(30);
 
-//     if(READ_BIT(I2C1->SR1, I2C_SR1_ADDR))
-//       I2C1->SR2;
+    imu.read_all();
 
-    // Delay(150);
+    Readings gyro = imu.gyro();
 
-    // uart_usb.send(mpu.send(0x00) + '0');
-    // uint8_t r[10] = {0, 0};
-    if (!mpu.is_sending())
-      mpu.send(0x43, false, &cb);
     char str[100];
-    // mpu.read(r, 2);
-    sprintf(str, "%d\n", int16_t((int16_t(reading[0]) << 8) | reading[1]));
+    sprintf(str, "%6d %6d %6d\n", gyro.x, gyro.y, gyro.z);
     uart_usb.send(str);
   }
 
