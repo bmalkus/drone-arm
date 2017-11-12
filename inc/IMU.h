@@ -29,32 +29,34 @@ public:
 private:
   I2C *_i2c;
 
-  uint8_t write_buf[64];
+  uint8_t _helper_buf[64];
   volatile uint8_t _calibrating = 0;
 
-  volatile bool _ready_to_read;
+  volatile bool _ready_to_read = false;
 
-  volatile bool _read_gyro = true;
+  volatile bool _read_gyro = false;
+  volatile bool _read_acc = false;
 
   Readings _gyro[2];
   Readings _acc[2];
-  Readings * volatile _curr_gyro = _gyro;
-  Readings * volatile _curr_acc = _acc;
-  Readings * volatile _read_buf_gyro = &(_gyro[1]);
-  Readings * volatile _read_buf_acc = &(_acc[1]);
+  volatile uint8_t _curr_gyro = 0;
+  volatile uint8_t _curr_acc = 0;
 
-  void gyro_reading_done();
-  void acc_reading_done();
+  Readings *volatile _target_buf = nullptr;
+
+  void read_next();
+
+  void _reg_addr_sent_handler();
+  void _reading_done_handler();
+  void _init_data_sent_handler();
 
   friend void reg_addr_sent_handler(void *);
-  friend void acc_reading_done_handler(void *);
-  friend void gyro_reading_done_handler(void *);
+  friend void reading_done_handler(void *);
   friend void init_data_sent_handler(void *);
 };
 
 void reg_addr_sent_handler(void *);
-void acc_reading_done_handler(void *);
-void gyro_reading_done_handler(void *);
+void reading_done_handler(void *);
 void init_data_sent_handler(void *);
 
 #endif /* IMU_H */

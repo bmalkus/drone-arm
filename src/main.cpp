@@ -155,9 +155,10 @@ int main(void)
     imu.read_all();
 
     Readings gyro = imu.gyro();
+    Readings acc = imu.acc();
 
     char str[100];
-    sprintf(str, "%6d %6d %6d\n", gyro.x, gyro.y, gyro.z);
+    sprintf(str, "gyro: %6d %6d %6d     acc:  %6d %6d %6d\n", gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z);
     uart_usb.send(str);
   }
 
