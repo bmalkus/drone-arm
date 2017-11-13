@@ -67,10 +67,8 @@ int main(void)
 
   // Update CMSIS variable (which can be updated also through SystemCoreClockUpdate function)
   SystemCoreClockUpdate();
-  // uint32_t a = SystemCoreClock;
-  // ((void)a);
 
-  /* Set systick to 1ms */
+  // Set systick to 1ms
   SysTick_Config(SystemCoreClock / 1000);
 
   // Enable clock for GPIOA, GPIOB, GPIOC
@@ -149,19 +147,6 @@ int main(void)
     uart_usb.send(str);
 
     if (READ_BIT(GPIOC->IDR, GPIO_IDR_ID13) == 0)
-    {
       imu.calibrate(50);
-      // Readings gyro = imu._gyro_offset;
-      // Readings acc = imu._acc_offset;
-      // sprintf(str, "gyro: %6d %6d %6d     acc:  %6d %6d %6d OFFSETS\n", gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z);
-      // uart_usb.send(str);
-      // Delay(5000);
-    }
   }
-
-  // /* Set systick to 1ms */
-  // SysTick_Config(100000000 / 1000);
-
-  // /* Update CMSIS variable (which can be updated also through SystemCoreClockUpdate function) */
-  // SystemCoreClock = 100000000;
 }
