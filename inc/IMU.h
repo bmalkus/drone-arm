@@ -8,6 +8,7 @@ union Readings {
     volatile int16_t x, y, z;
   };
   volatile uint8_t data[6];
+  volatile int16_t data16[3];
 };
 
 class IMU
@@ -17,20 +18,25 @@ public:
 
   void init();
 
-  // void calibrate(uint8_t probes);
+  void calibrate(uint32_t probes);
 
   void read_all();
 
   Readings acc();
   Readings gyro();
 
+  Readings true_acc();
+  Readings true_gyro();
+
   bool ready_to_read() { return _ready_to_read; }
+
+  Readings _gyro_offset = {{0, 0, 0}};
+  Readings _acc_offset = {{0, 0, 0}};
 
 private:
   I2C *_i2c;
 
-  uint8_t _helper_buf[64];
-  volatile uint8_t _calibrating = 0;
+  uint8_t _helper_buf[16];
 
   volatile bool _ready_to_read = false;
 
@@ -44,7 +50,7 @@ private:
 
   Readings *volatile _target_buf = nullptr;
 
-  void read_next();
+  void _read_next();
 
   void _reg_addr_sent_handler();
   void _reading_done_handler();

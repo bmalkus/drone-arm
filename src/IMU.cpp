@@ -1,4 +1,5 @@
 #include <IMU.h>
+#include <utils.h>
 
 IMU::IMU(I2C *i2c):
   _i2c(i2c)
@@ -17,12 +18,36 @@ void IMU::init()
   _i2c->send(_helper_buf, 2, true, &init_data_sent_handler, this);
 }
 
-// void IMU::calibrate(uint8_t probes)
-// {
-//   _calibrating = probes;
-//   while (_calibrating > 0)
-//     ;
-// }
+void IMU::calibrate(uint32_t probes)
+{
+  int32_t gyro_off[3] = {0, 0, 0};
+  int32_t acc_off[3] = {0, 0, 0};
+  while (_i2c->is_sending())
+    ;
+  uint32_t calibration = probes;
+  while (calibration > 0)
+  {
+    read_all();
+    while (_read_gyro || _read_acc)
+      ;
+    Readings g = true_gyro();
+    Readings a = true_acc();
+    for (uint8_t i = 0; i < 3; ++i)
+    {
+      gyro_off[i] += g.data16[i];
+      acc_off[i] += a.data16[i];
+    }
+    calibration -= 1;
+    Delay(2);
+  }
+  for (uint8_t i = 0; i < 3; ++i)
+  {
+    gyro_off[i] /= int32_t(probes);
+    acc_off[i] /= int32_t(probes);
+  }
+  _gyro_offset = {{(int16_t) gyro_off[0], (int16_t) gyro_off[1], (int16_t) gyro_off[2]}};
+  _acc_offset = {{(int16_t) acc_off[0], (int16_t) acc_off[1], (int16_t) acc_off[2]}};
+}
 
 void IMU::read_all()
 {
@@ -30,20 +55,38 @@ void IMU::read_all()
     return;
   _read_gyro = true;
   _read_acc = true;
-  read_next();
+  _read_next();
 }
 
 Readings IMU::acc()
 {
-  return _acc[_curr_acc];
+  return {{
+    (int16_t) clamp(_acc[_curr_acc].x - _acc_offset.x, INT16_MIN, INT16_MAX),
+    (int16_t) clamp(_acc[_curr_acc].y - _acc_offset.y, INT16_MIN, INT16_MAX),
+    (int16_t) clamp(_acc[_curr_acc].z - _acc_offset.z, INT16_MIN, INT16_MAX)
+  }};
 }
 
 Readings IMU::gyro()
 {
+  return {{
+    (int16_t) clamp(_gyro[_curr_gyro].x - _gyro_offset.x, INT16_MIN, INT16_MAX),
+    (int16_t) clamp(_gyro[_curr_gyro].y - _gyro_offset.y, INT16_MIN, INT16_MAX),
+    (int16_t) clamp(_gyro[_curr_gyro].z - _gyro_offset.z, INT16_MIN, INT16_MAX)
+  }};
+}
+
+Readings IMU::true_acc()
+{
+  return _acc[_curr_acc];
+}
+
+Readings IMU::true_gyro()
+{
   return _gyro[_curr_gyro];
 }
 
-void IMU::read_next()
+void IMU::_read_next()
 {
   if (_read_gyro)
     _i2c->send(0x43, false, &reg_addr_sent_handler, this);
@@ -75,7 +118,7 @@ void IMU::_reading_done_handler()
     _curr_acc = (_curr_acc + 1) % 2;
     _read_acc = false;
   }
-  read_next();
+  _read_next();
 }
 
 void IMU::_init_data_sent_handler()
