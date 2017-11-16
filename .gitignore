@@ -1,15 +1,14 @@
 CMSIS/
 LinkerScript.ld
+
+Debug/
+Release/
 HelloWorld Debug.cfg
 HelloWorld Run.cfg
-*.html
-*.chm
 
 .cproject
 .project
 .settings/
-Debug
-Release/
 
 .DS_Store
 
