@@ -20,7 +20,7 @@ public:
 
   void calibrate(uint32_t probes);
 
-  void read_all();
+  void read_all(cb_type done_cb=nullptr, void *user_data=nullptr, cb_type failed_cb=nullptr);
 
   Readings acc();
   Readings gyro();
@@ -38,6 +38,9 @@ private:
 
   uint8_t _helper_buf[16];
 
+  volatile cb_type _done_cb = nullptr, _failed_cb = nullptr;
+  void *volatile _user_data = nullptr;
+
   volatile bool _ready_to_read = false;
 
   volatile bool _read_gyro = false;
@@ -50,7 +53,7 @@ private:
 
   Readings *volatile _target_buf = nullptr;
 
-  void _read_next();
+  bool _read_next();
 
   void _reg_addr_sent_handler();
   void _reading_done_handler();

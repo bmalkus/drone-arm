@@ -49,10 +49,15 @@ void IMU::calibrate(uint32_t probes)
   _acc_offset = {{(int16_t) acc_off[0], (int16_t) acc_off[1], (int16_t) acc_off[2]}};
 }
 
-void IMU::read_all()
+void IMU::read_all(cb_type done_cb, void *user_data, cb_type failed_cb)
 {
   if (_i2c->is_sending())
     return;
+
+  _done_cb = done_cb;
+  _user_data = user_data;
+  _failed_cb = failed_cb;
+
   _read_gyro = true;
   _read_acc = true;
   _read_next();
@@ -86,12 +91,19 @@ Readings IMU::true_gyro()
   return _gyro[_curr_gyro];
 }
 
-void IMU::_read_next()
+bool IMU::_read_next()
 {
   if (_read_gyro)
+  {
     _i2c->send(0x43, false, &reg_addr_sent_handler, this);
+    return true;
+  }
   else if (_read_acc)
+  {
     _i2c->send(0x3B, false, &reg_addr_sent_handler, this);
+    return true;
+  }
+  return false;
 }
 
 void IMU::_reg_addr_sent_handler()
@@ -118,7 +130,8 @@ void IMU::_reading_done_handler()
     _curr_acc = (_curr_acc + 1) % 2;
     _read_acc = false;
   }
-  _read_next();
+  if (!_read_next() && _done_cb)
+    _done_cb(_user_data);
 }
 
 void IMU::_init_data_sent_handler()

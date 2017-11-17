@@ -76,9 +76,9 @@ void I2C::handle_event(HandlerHelper::InterruptType itype)
       }
       if (READ_BIT(_I2C->SR1, I2C_SR1_BTF))
       {
+        MODIFY_REG(_I2C->CR2, I2C_CR2_ITBUFEN_Msk | I2C_CR2_ITEVTEN_Msk, 0x0);
         if (_do_stop_cond)
           stop_cond();
-        MODIFY_REG(_I2C->CR2, I2C_CR2_ITBUFEN_Msk | I2C_CR2_ITEVTEN_Msk, 0x0);
         if (_done_cb != nullptr)
           _done_cb(_user_data);
       }
@@ -96,8 +96,8 @@ void I2C::handle_event(HandlerHelper::InterruptType itype)
         }
         if (_len == 0)
         {
-          stop_cond();
           MODIFY_REG(_I2C->CR2, I2C_CR2_ITBUFEN_Msk | I2C_CR2_ITEVTEN_Msk, 0x0);
+          stop_cond();
           if (_done_cb != nullptr)
             _done_cb(_user_data);
         }
@@ -145,6 +145,13 @@ void I2C::start_cond(RW rw)
   SET_BIT(_I2C->CR2, I2C_CR2_ITBUFEN);
   SET_BIT(_I2C->CR2, I2C_CR2_ITEVTEN);
   SET_BIT(_I2C->CR1, I2C_CR1_START);
+}
+
+void I2C::abort_sending()
+{
+  MODIFY_REG(_I2C->CR2, I2C_CR2_ITBUFEN_Msk | I2C_CR2_ITEVTEN_Msk, 0x0);
+  _len = 0;
+  stop_cond();
 }
 
 void I2C::stop_cond()

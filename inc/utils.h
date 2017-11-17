@@ -3,6 +3,8 @@
 
 #include <stm32f4xx.h>
 
+using cb_type = void (*)(void*);
+
 void Delay(int ms);
 
 template <typename T>

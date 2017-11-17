@@ -1,13 +1,3 @@
-/**
-  ******************************************************************************
-  * @file    main.c
-  * @author  Ac6
-  * @version V1.0
-  * @date    01-December-2013
-  * @brief   Default main function.
-  ******************************************************************************
-*/
-
 #include <stm32f4xx.h>
 
 #include <USART.h>
@@ -140,10 +130,10 @@ int main(void)
     imu.read_all();
 
     Readings gyro = imu.gyro();
-    Readings acc = imu.acc();
+    // Readings acc = imu.acc();
 
     char str[128];
-    sprintf(str, "gyro: %6d %6d %6d     acc:  %6d %6d %6d\n", gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z);
+    sprintf(str, "%6d %6d %6d\n", gyro.x, gyro.y, gyro.z);
     uart_usb.send(str);
 
     if (READ_BIT(GPIOC->IDR, GPIO_IDR_ID13) == 0)

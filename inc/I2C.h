@@ -6,8 +6,7 @@
 #include <stm32f4xx.h>
 
 #include <HandlerHelper.h>
-
-using cb_type = void (*)(void*);
+#include <utils.h>
 
 class I2C : public HandlerClass
 {
@@ -25,6 +24,8 @@ public:
 
   bool read(volatile uint8_t *buf, int len, cb_type cb=nullptr, void *user_data=nullptr);
 
+  void abort_sending();
+
   bool is_sending() { return READ_BIT(_I2C->CR2, I2C_CR2_ITBUFEN); }
 
 private:
@@ -38,12 +39,12 @@ private:
   uint8_t _slave_addr;
   volatile RW _current_rw;
 
-  const uint8_t * volatile _to_send;
+  const uint8_t *volatile _to_send;
   volatile uint8_t _byte_to_send;
   volatile uint8_t _len;
   volatile bool _do_stop_cond;
   volatile cb_type _done_cb;
-  void * volatile _user_data;
+  void *volatile _user_data;
 
   volatile uint8_t * volatile _read_buf;
 
