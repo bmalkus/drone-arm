@@ -125,15 +125,15 @@ int main(void)
 
   for(;;)
   {
-    Delay(30);
+    Delay(5);
 
     imu.read_all();
 
     Readings gyro = imu.gyro();
-    // Readings acc = imu.acc();
+    Readings acc = imu.acc();
 
     char str[128];
-    sprintf(str, "%6d %6d %6d\n", gyro.x, gyro.y, gyro.z);
+    sprintf(str, "%6d %6d %6d               %6d %6d %6d\n", gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z);
     uart_usb.send(str);
 
     if (READ_BIT(GPIOC->IDR, GPIO_IDR_ID13) == 0)
