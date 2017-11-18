@@ -31,7 +31,7 @@ void USART::init()
 
   // Enable interrupt
   if (_async)
-    HandlerHelper::add_handler(HandlerHelper::USART2_INT, this);
+    HandlerHelper::set_handler(HandlerHelper::USART2_INT, __handle_uart_event, this);
 
   // Enable USART
   SET_BIT(_USART->CR1, USART_CR1_UE);
@@ -101,4 +101,11 @@ void USART::unlock()
 bool USART::is_locked()
 {
   return _lock;
+}
+
+
+void __handle_uart_event(HandlerHelper::InterruptType itype, void *_usart)
+{
+  USART *usart = (USART*)_usart;
+  usart->handle_event(itype);
 }

@@ -7,7 +7,7 @@
 
 #include <HandlerHelper.h>
 
-class USART : public HandlerClass
+class USART
 {
 public:
   USART(USART_TypeDef *USART, uint32_t baud_rate, bool async=true);
@@ -18,8 +18,6 @@ public:
   void send(uint8_t to_send);
 
   bool is_sending();
-
-  virtual void handle_event(HandlerHelper::InterruptType itype) override;
 
 private:
   USART_TypeDef *_USART;
@@ -34,6 +32,12 @@ private:
   void lock();
   void unlock();
   bool is_locked();
+
+  void handle_event(HandlerHelper::InterruptType itype);
+
+  friend void __handle_uart_event(HandlerHelper::InterruptType, void *);
 };
+
+void __handle_uart_event(HandlerHelper::InterruptType, void *);
 
 #endif /* USART_H */

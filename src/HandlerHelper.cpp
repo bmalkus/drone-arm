@@ -5,26 +5,22 @@
 
 extern "C" void USART2_IRQHandler()
 {
-  HandlerHelper::call_handlers(HandlerHelper::USART2_INT);
+  HandlerHelper::call_handler(HandlerHelper::USART2_INT);
 }
 
 extern "C" void I2C1_EV_IRQHandler()
 {
-  HandlerHelper::call_handlers(HandlerHelper::I2C1_EV_INT);
+  HandlerHelper::call_handler(HandlerHelper::I2C1_EV_INT);
 }
 
-void HandlerHelper::call_handlers(InterruptType interrupt)
+void HandlerHelper::call_handler(InterruptType interrupt)
 {
-  auto vec = handlers[interrupt];
-  for (auto handler : vec)
-  {
-    handler->handle_event(interrupt);
-  }
+  handlers[interrupt].handler(interrupt, handlers[interrupt].user_data);
 }
 
-void HandlerHelper::add_handler(InterruptType interrupt, HandlerClass *handler)
+void HandlerHelper::set_handler(InterruptType interrupt, handler_type handler, void *user_data)
 {
-  HandlerHelper::handlers[interrupt].push_back(handler);
+  handlers[interrupt] = {handler, user_data};
 }
 
-std::map<HandlerHelper::InterruptType, std::vector<HandlerClass*>> HandlerHelper::handlers;
+HandlerHelper::Handler HandlerHelper::handlers[16];

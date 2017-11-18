@@ -14,7 +14,7 @@
  * Note: Appropriate IO pins must be configured separately in order to I2C work properly,
  * as such configuration lays beyond this class responsibility
  */
-class I2C : public HandlerClass
+class I2C
 {
 public:
   /**
@@ -40,8 +40,6 @@ public:
    * @param addr Address of slave device to communicate with
    */
   void set_addr(uint8_t addr);
-
-  virtual void handle_event(HandlerHelper::InterruptType itype) override;
 
   /**
    * @brief Sends single byte of data to slave device - asynchronous
@@ -107,6 +105,12 @@ private:
 
   void start_cond(RW rw);
   void stop_cond();
+
+  void handle_event(HandlerHelper::InterruptType itype);
+
+  friend void __handle_i2c_event(HandlerHelper::InterruptType, void *);
 };
+
+void __handle_i2c_event(HandlerHelper::InterruptType, void *);
 
 #endif /* I2C_H */

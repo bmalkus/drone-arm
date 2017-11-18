@@ -1,30 +1,26 @@
 #ifndef HANDLERHELPER_H
 #define HANDLERHELPER_H
 
-#include <map>
-#include <vector>
+class HandlerHelper {
 
-class HandlerClass;
-
-class HandlerHelper
-{
 public:
   enum InterruptType { USART2_INT, I2C1_EV_INT };
 
 private:
-  static std::map<InterruptType, std::vector<HandlerClass*>> handlers;
+  using handler_type = void (*)(InterruptType, void*);
+
+  struct Handler {
+    handler_type handler;
+    void *user_data;
+  };
+
+  static Handler handlers[16];
 
 public:
   HandlerHelper() = delete;
 
-  static void call_handlers(InterruptType interrupt);
-  static void add_handler(InterruptType interrupt, HandlerClass *handler_class);
-};
-
-class HandlerClass
-{
-public:
-  virtual void handle_event(HandlerHelper::InterruptType) = 0;
+  static void call_handler(InterruptType interrupt);
+  static void set_handler(InterruptType interrupt, handler_type handler, void *user_data);
 };
 
 #endif /* HANDLERHELPER_H */

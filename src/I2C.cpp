@@ -43,7 +43,7 @@ void I2C::init(uint32_t /*APB_freq_MHz*/, bool fs, uint8_t /*I2C_freq_kHz*/)
   SET_BIT(_I2C->CR1, I2C_CR1_PE);
   READ_BIT(_I2C->CR1, I2C_CR1_PE);
 
-  HandlerHelper::add_handler(HandlerHelper::I2C1_EV_INT, this);
+  HandlerHelper::set_handler(HandlerHelper::I2C1_EV_INT, __handle_i2c_event, this);
 }
 
 void I2C::set_addr(uint8_t addr)
@@ -157,4 +157,11 @@ void I2C::abort_sending()
 void I2C::stop_cond()
 {
   SET_BIT(_I2C->CR1, I2C_CR1_STOP);
+}
+
+
+void __handle_i2c_event(HandlerHelper::InterruptType itype, void *_i2c)
+{
+  I2C *i2c = (I2C*)_i2c;
+  i2c->handle_event(itype);
 }
