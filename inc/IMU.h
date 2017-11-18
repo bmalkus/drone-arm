@@ -17,8 +17,7 @@ union Readings {
 /**
  * @brief Class responsible for managing IMU via I2C interface
  */
-class IMU
-{
+class IMU {
 public:
   /**
    * @brief Constructor
@@ -85,13 +84,34 @@ public:
    */
   bool ready_to_read() { return _ready_to_read; }
 
+  /**
+   * @brief Indicates if IMU is busy sending/receiving data
+   *
+   * @return true if sending/receiving, false otherwise
+   */
+  bool is_busy() { return _current != _chunks; }
+
 private:
   I2C *_i2c;
 
   volatile bool _ready_to_read = false;
 
-  volatile bool _read_gyro = false;
-  volatile bool _read_acc = false;
+  struct ReadChunk {
+    uint8_t reg_addr;
+    volatile uint8_t *dest;
+    uint8_t len;
+  };
+
+  struct SendChunk {
+    uint8_t reg_addr;
+    uint8_t data[8];
+    uint8_t len;
+  };
+
+  ReadChunk _read_buf[8];
+  SendChunk _send_buf[8];
+  uint8_t _chunks = 0;
+  volatile uint8_t _current = 0;
 
   Readings *volatile _read_target_buf = nullptr;
 
@@ -103,21 +123,8 @@ private:
   Readings _gyro_offset = {{0, 0, 0}};
   Readings _acc_offset = {{0, 0, 0}};
 
-  volatile cb_type _read_done_cb = nullptr, _read_failed_cb = nullptr;
-  void *volatile _read_cb_user_data = nullptr;
-
-  struct SendChunk {
-    uint8_t reg_addr;
-    uint8_t data[8];
-    uint8_t len;
-  };
-
-  SendChunk _send_buf[8];
-  uint8_t _send_count = 0;
-  volatile uint8_t _current = 0;
-
-  volatile cb_type _send_done_cb = nullptr;
-  void *volatile _send_cb_user_data = nullptr;
+  volatile cb_type _done_cb = nullptr, _failed_cb = nullptr;
+  void *volatile _cb_user_data = nullptr;
 
   bool _read_next();
 
