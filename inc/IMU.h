@@ -15,7 +15,10 @@ union Readings {
 };
 
 /**
- * @brief Class responsible for managing IMU via I2C interface
+ * @brief Class responsible for managing IMU via i2c interface
+ *
+ * Note: Appropriate IO pins must be configured separately in order to I2C work properly,
+ * as such configuration lays beyond this class responsibility
  */
 class IMU {
 public:
@@ -27,7 +30,7 @@ public:
   IMU(I2C *i2c);
 
   /**
-   * @brief Initializes both I2C interface and IMU itself - asynchronous (see ready_to_read())
+   * @brief Initializes both I2C peripheral and IMU itself - asynchronous (see ready_to_read())
    */
   void init();
 
