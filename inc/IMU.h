@@ -88,15 +88,12 @@ public:
 private:
   I2C *_i2c;
 
-  uint8_t _helper_buf[16];
-
-  volatile cb_type _done_cb = nullptr, _failed_cb = nullptr;
-  void *volatile _user_data = nullptr;
-
   volatile bool _ready_to_read = false;
 
   volatile bool _read_gyro = false;
   volatile bool _read_acc = false;
+
+  Readings *volatile _read_target_buf = nullptr;
 
   Readings _gyro[2];
   Readings _acc[2];
@@ -106,21 +103,41 @@ private:
   Readings _gyro_offset = {{0, 0, 0}};
   Readings _acc_offset = {{0, 0, 0}};
 
-  Readings *volatile _target_buf = nullptr;
+  volatile cb_type _read_done_cb = nullptr, _read_failed_cb = nullptr;
+  void *volatile _read_cb_user_data = nullptr;
+
+  struct SendChunk {
+    uint8_t reg_addr;
+    uint8_t data[8];
+    uint8_t len;
+  };
+
+  SendChunk _send_buf[8];
+  uint8_t _send_count = 0;
+  volatile uint8_t _current = 0;
+
+  volatile cb_type _send_done_cb = nullptr;
+  void *volatile _send_cb_user_data = nullptr;
 
   bool _read_next();
+
+  void _send_from_buf(cb_type cb, void *user_data);
+  bool _send_next();
 
   void _reg_addr_sent_handler();
   void _reading_done_handler();
   void _init_data_sent_handler();
+  void _sending_handler();
 
   friend void __reg_addr_sent_handler(void *);
   friend void __reading_done_handler(void *);
   friend void __init_data_sent_handler(void *);
+  friend void __sending_handler(void *);
 };
 
 void __reg_addr_sent_handler(void *);
 void __reading_done_handler(void *);
 void __init_data_sent_handler(void *);
+void __sending_handler(void *);
 
 #endif /* IMU_H */

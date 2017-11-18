@@ -121,7 +121,8 @@ int main(void)
 
   imu.init();
 
-  Delay(30);
+  while (!imu.ready_to_read())
+    ;
 
   for(;;)
   {

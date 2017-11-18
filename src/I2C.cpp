@@ -11,29 +11,29 @@ I2C::I2C(I2C_TypeDef *I2C):
   // empty
 }
 
-void I2C::init(uint32_t APB_freq_MHz, bool fs, uint8_t I2C_freq_kHz)
+void I2C::init(uint32_t /*APB_freq_MHz*/, bool fs, uint8_t /*I2C_freq_kHz*/)
 {
   CLEAR_BIT(_I2C->CR1, I2C_CR1_PE);
   READ_BIT(_I2C->CR1, I2C_CR1_PE);
 
   MODIFY_REG(_I2C->CR2, I2C_CR2_FREQ, 45 << I2C_CR2_FREQ_Pos);
 
-  float period = 1000 / APB_freq_MHz;
-  uint32_t trise;
-  uint32_t CCR;
+  // float period = 1000 / APB_freq_MHz;
+  // uint32_t trise;
+  // uint32_t CCR;
   if (fs)
   {
     SET_BIT(_I2C->CCR, I2C_CCR_FS);
     SET_BIT(_I2C->CCR, I2C_CCR_DUTY);
-    trise = 300 / period;
-    CCR = 1 / ((25 * I2C_freq_kHz * period) / 1000000);
+    // trise = 300 / period;
+    // CCR = 1 / ((25 * I2C_freq_kHz * period) / 1000000);
   }
   else
   {
-    trise = 1000 / period;
-    CCR = 1 / ((2 * I2C_freq_kHz * period) / 1000000);
+    // trise = 1000 / period;
+    // CCR = 1 / ((2 * I2C_freq_kHz * period) / 1000000);
   }
-  trise += 1;
+  // trise += 1;
 
   // MODIFY_REG(_I2C->TRISE, I2C_TRISE_TRISE, trise << I2C_TRISE_TRISE_Pos);
   // MODIFY_REG(_I2C->CCR, I2C_CCR_CCR, CCR << I2C_CCR_CCR_Pos);

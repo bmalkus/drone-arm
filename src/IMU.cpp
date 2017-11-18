@@ -12,10 +12,11 @@ void IMU::init()
   _i2c->init(45, false, 100);
   _i2c->set_addr(0b1101000);
 
-  _helper_buf[0] = 0x6B;
-  _helper_buf[1] = 0b00000011;
+  _send_buf[0] = {0x6B, {0b00000011}, 1};
 
-  _i2c->send(_helper_buf, 2, true, &__init_data_sent_handler, this);
+  _send_count = 1;
+
+  _send_from_buf(&__init_data_sent_handler, this);
 }
 
 void IMU::calibrate(uint32_t probes)
@@ -54,9 +55,9 @@ void IMU::read_all(cb_type done_cb, void *user_data, cb_type failed_cb)
   if (_i2c->is_sending())
     return;
 
-  _done_cb = done_cb;
-  _user_data = user_data;
-  _failed_cb = failed_cb;
+  _read_done_cb = done_cb;
+  _read_cb_user_data = user_data;
+  _read_failed_cb = failed_cb;
 
   _read_gyro = true;
   _read_acc = true;
@@ -106,20 +107,38 @@ bool IMU::_read_next()
   return false;
 }
 
+void IMU::_send_from_buf(cb_type cb, void *user_data)
+{
+  _send_done_cb = cb;
+  _send_cb_user_data = user_data;
+  _send_next();
+}
+
+bool IMU::_send_next()
+{
+  if (_current < _send_count)
+  {
+    _i2c->send(&_send_buf[_current].reg_addr, _send_buf[_current].len + 1, true, &__sending_handler, this);
+    _current += 1;
+    return true;
+  }
+  return false;
+}
+
 void IMU::_reg_addr_sent_handler()
 {
   if (_read_gyro)
-    _target_buf = &(_gyro[1-_curr_gyro]);
+    _read_target_buf = &(_gyro[1-_curr_gyro]);
   else if (_read_acc)
-    _target_buf = &(_acc[1-_curr_acc]);
-  _i2c->read(_target_buf->data, 6, &__reading_done_handler, this);
+    _read_target_buf = &(_acc[1-_curr_acc]);
+  _i2c->read(_read_target_buf->data, 6, &__reading_done_handler, this);
 }
 
 void IMU::_reading_done_handler()
 {
-  _target_buf->x = __REV16(_target_buf->x);
-  _target_buf->y = __REV16(_target_buf->y);
-  _target_buf->z = __REV16(_target_buf->z);
+  _read_target_buf->x = __REV16(_read_target_buf->x);
+  _read_target_buf->y = __REV16(_read_target_buf->y);
+  _read_target_buf->z = __REV16(_read_target_buf->z);
   if (_read_gyro)
   {
     _curr_gyro = (_curr_gyro + 1) % 2;
@@ -130,13 +149,19 @@ void IMU::_reading_done_handler()
     _curr_acc = (_curr_acc + 1) % 2;
     _read_acc = false;
   }
-  if (!_read_next() && _done_cb)
-    _done_cb(_user_data);
+  if (!_read_next() && _read_done_cb)
+    _read_done_cb(_read_cb_user_data);
 }
 
 void IMU::_init_data_sent_handler()
 {
   _ready_to_read = true;
+}
+
+void IMU::_sending_handler()
+{
+  if (!_send_next() && _send_done_cb)
+    _send_done_cb(_send_cb_user_data);
 }
 
 
@@ -156,4 +181,10 @@ void __init_data_sent_handler(void *_imu)
 {
   IMU *imu = (IMU*)_imu;
   imu->_init_data_sent_handler();
+}
+
+void __sending_handler(void *_imu)
+{
+  IMU *imu = (IMU*)_imu;
+  imu->_sending_handler();
 }
