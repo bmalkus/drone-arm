@@ -142,8 +142,8 @@ void IMU::_reading_done_handler()
     _curr_acc = (1 - _curr_acc);
   }
   _current += 1;
-  if (!_read_next() && _done_cb)
-    _done_cb(_cb_user_data);
+  if (!_read_next())
+    _call_and_clear_callback();
 }
 
 void IMU::_init_data_sent_handler()
@@ -154,10 +154,23 @@ void IMU::_init_data_sent_handler()
 void IMU::_sending_handler()
 {
   _current += 1;
-  if (!_send_next() && _done_cb)
-    _done_cb(_cb_user_data);
+  if (!_send_next())
+    _call_and_clear_callback();
 }
 
+void IMU::_call_and_clear_callback()
+{
+  if (_done_cb)
+  {
+    cb_type to_call = _done_cb;
+    void *to_pass = _cb_user_data;
+    _done_cb = nullptr;
+    _cb_user_data = nullptr;
+    to_call(to_pass);
+  }
+}
+
+// Non class methods
 
 void __reg_addr_sent_handler(void *_imu)
 {

@@ -18,6 +18,3 @@ HelloWorld Run.cfg
 
 Doxygen/
 Doxyfile
-
-utils/*
-!utils/capture_uart.py

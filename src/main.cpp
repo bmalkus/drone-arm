@@ -134,7 +134,7 @@ int main(void)
     Readings acc = imu.acc();
 
     char str[128];
-    sprintf(str, "%6d %6d %6d               %6d %6d %6d\n", gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z);
+    sprintf(str, "r %6d %6d %6d %6d %6d %6d\n", gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z);
     uart_usb.send(str);
 
     if (READ_BIT(GPIOC->IDR, GPIO_IDR_ID13) == 0)
