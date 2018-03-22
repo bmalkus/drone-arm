@@ -7,21 +7,51 @@
 
 #include <HandlerHelper.h>
 
+/**
+ * @brief Class responsible for managing USART interface
+ *
+ * Note: Appropriate IO pins must be configured separately in order to USART work properly,
+ * as such configuration lays beyond this class responsibility
+ */
 class USART
 {
 public:
-  USART(USART_TypeDef *USART, uint32_t baud_rate, bool async=true);
+  /**
+   * @brief Constructor
+   *
+   * @param USART pointer to CMSIS USART struct that will be used
+   * @param baud_rate baud rate to be set for USART interface
+   * @param async bool indicating if communication should be done asynchronously
+   */
+  USART(USART_TypeDef *USART, uint32_t baud_rate);
 
+  /**
+   * @brief Initializes USART peripheral
+   */
   void init();
 
+  /**
+   * @brief Sends char array via interface
+   *
+   * @param to_send char array (string) to send
+   */
   void send(const char *to_send);
+  /**
+   * @brief Sends single byte via interface
+   *
+   * @param to_send byte to send
+   */
   void send(uint8_t to_send);
 
+  /**
+   * @brief Indicates if interface is busy sending data
+   *
+   * @return true if sending, false otherwise
+   */
   bool is_sending();
 
 private:
   USART_TypeDef *_USART;
-  bool _async;
   uint32_t _baud_rate;
   const uint8_t *_to_send;
   uint32_t _size;

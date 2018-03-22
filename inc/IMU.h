@@ -14,6 +14,13 @@ union Readings {
   volatile int16_t data16[3];
 };
 
+union Angles {
+  struct {
+    float x, y, z;
+  };
+  float xyz[3];
+};
+
 /**
  * @brief Class responsible for managing IMU via i2c interface
  *

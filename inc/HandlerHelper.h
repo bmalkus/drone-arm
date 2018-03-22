@@ -4,7 +4,7 @@
 class HandlerHelper {
 
 public:
-  enum InterruptType { USART2_INT, I2C1_EV_INT };
+  enum InterruptType { USART2_INT = 0, I2C1_EV_INT };
 
 private:
   using handler_type = void (*)(InterruptType, void*);

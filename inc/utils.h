@@ -3,6 +3,8 @@
 
 #include <stm32f4xx.h>
 
+#define READ_VAL(REG, PART) (((REG) & (PART##_Msk)) >> (PART##_Pos))
+
 using cb_type = void (*)(void*);
 
 void Delay(int ms);

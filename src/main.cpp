@@ -1,14 +1,18 @@
 #include <stm32f4xx.h>
 
-#include <USART.h>
 #include <I2C.h>
 #include <IMU.h>
+#include <PWM.h>
+#include <SimpleGyroFilter.h>
+#include <Timer.h>
+#include <USART.h>
 #include <utils.h>
 
 #include <cstdio>
+#include <cmath>
 
 
-USART uart_usb(USART2, 115200, true);
+USART uart_usb(USART2, 115200);
 I2C mpu(I2C1);
 
 extern "C" void SysTick_Handler()
@@ -44,7 +48,7 @@ int main(void)
     ;
 
   // Configure AHB Prescaler
-  MODIFY_REG(RCC->CFGR, RCC_CFGR_HPRE, 0x00 << RCC_CFGR_HPRE_Pos);
+  MODIFY_REG(RCC->CFGR, RCC_CFGR_HPRE, 0b00 << RCC_CFGR_HPRE_Pos);
   // APB1 prescaler
   MODIFY_REG(RCC->CFGR, RCC_CFGR_PPRE1, 0b101 << RCC_CFGR_PPRE1_Pos);
   // APB2 prescaler
@@ -55,7 +59,7 @@ int main(void)
   while(READ_BIT(RCC->CFGR, RCC_CFGR_SWS) != RCC_CFGR_SWS_PLL)
     ;
 
-  // Update CMSIS variable (which can be updated also through SystemCoreClockUpdate function)
+  // Update SystemCoreClock to 180 MHz
   SystemCoreClockUpdate();
 
   // Set systick to 1ms
@@ -77,10 +81,18 @@ int main(void)
   SET_BIT(RCC->APB1ENR, RCC_APB1ENR_I2C1EN);
   READ_BIT(RCC->APB1ENR, RCC_APB1ENR_I2C1EN);
 
-  // Set PA5 as output
+  // Enable clock for TIM1
+  SET_BIT(RCC->APB2ENR, RCC_APB2ENR_TIM1EN);
+  READ_BIT(RCC->APB2ENR, RCC_APB2ENR_TIM1EN);
+
+  // Enable clock for TIM14
+  SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM14EN);
+  READ_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM14EN);
+
+  // Set PA5 as output (LED)
   MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE5, 0b01 << GPIO_MODER_MODE5_Pos);
 
-  // Set PC13 as input with pull-up
+  // Set PC13 as input with pull-up (button)
   MODIFY_REG(GPIOC->MODER, GPIO_MODER_MODE13, 0b00 << GPIO_MODER_MODE13_Pos);
   // MODIFY_REG(GPIOC->PUPDR, GPIO_PUPDR_PUPD13, 0b01 << GPIO_PUPDR_PUPD13_Pos);
 
@@ -98,6 +110,7 @@ int main(void)
 
   // MODIFY_REG(SYSCFG->EXTICR[3], SYSCFG_EXTICR4_EXTI13, SYSCFG_EXTICR4_EXTI13_PC);
 
+  // Enable NVIC interrupts
   NVIC_EnableIRQ(USART2_IRQn);
   NVIC_EnableIRQ(I2C1_EV_IRQn);
 
@@ -121,23 +134,71 @@ int main(void)
 
   imu.init();
 
-  while (!imu.ready_to_read())
-    ;
+  // prescaler will internally be set to 180 - prescaler input is 180 MHz
+  // (APB2 x 2, as prescaler for APB2 > 1), output will be 1 MHz
+  PWM pwm(TIM1, 200, 5000, 4);
+
+  pwm.init();
+
+  // while (!imu.ready_to_read())
+  //   ;
+
+  constexpr float gyro_sensitivity = ((1000.f * M_PI)/(180.f * ((2 << 15) - 1)));
+
+  SimpleGyroFilter gyro_filter(gyro_sensitivity, 0.005f);
+
+  // set pins for PWM
+  MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE8, 0b10 << GPIO_MODER_MODE8_Pos);
+  MODIFY_REG(GPIOA->AFR[1], GPIO_AFRH_AFSEL8, 0b0001 << GPIO_AFRH_AFSEL8_Pos);
+
+  pwm.set(1, 750);
+
+  pwm.start();
+
+  bool clicked = false;
+
+  // uint16_t pwm_val = 750;
+
+  Timer::init();
 
   for(;;)
   {
-    Delay(5);
+    Delay(10);
 
-    imu.read_all();
+    // imu.read_all();
 
-    Readings gyro = imu.gyro();
-    Readings acc = imu.acc();
+    // Readings gyro = imu.gyro();
+    // Readings acc = imu.acc();
+
+    // gyro_filter.set(gyro, acc);
 
     char str[128];
-    sprintf(str, "r %6d %6d %6d %6d %6d %6d\n", gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z);
-    uart_usb.send(str);
+//    sprintf(str, "r %6d %6d %6d %6d %6d %6d\n", gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z);
+    // Angles angles = gyro_filter.get_angles();
+    // sprintf(str, "r %6.2f %6.2f %6.2f\n", angles.x, angles.y, angles.z);
+    // sprintf(str, "%d\n", TIM1->CNT);
+    // sprintf(str, "123\n");
+//    if (!uart_usb.is_sending())
 
     if (READ_BIT(GPIOC->IDR, GPIO_IDR_ID13) == 0)
-      imu.calibrate(50);
+    {
+      if (!clicked)
+      {
+        clicked = true;
+        // if (pwm_val == 2000)
+        //   pwm_val = 750;
+        // else
+        //   pwm_val += 250;
+        // pwm.set(1, pwm_val);
+        // imu.calibrate(50);
+        // gyro_filter.reset_angles();
+        sprintf(str, "%lu\n", Timer::now());
+        uart_usb.send(str);
+      }
+    }
+    else
+    {
+      clicked = false;
+    }
   }
 }

@@ -2,8 +2,8 @@
 
 #include <cstring>
 
-USART::USART(USART_TypeDef *USART, uint32_t baud_rate, bool async):
-  _USART(USART), _async(async), _baud_rate(baud_rate)
+USART::USART(USART_TypeDef *USART, uint32_t baud_rate):
+  _USART(USART), _baud_rate(baud_rate)
 {
   // empty
 }
@@ -14,10 +14,18 @@ void USART::init()
   CLEAR_BIT(_USART->CR1, USART_CR1_UE);
 
   // Configure baud rate
+  // first, compute desired usartdiv - transformed formula from documentation, and multiply by 100
   uint32_t usartdiv = (45000000u * 25u) / (4u * _baud_rate); // (f_apb1 / (16 * baud)) * 100
+  // extract mantisa (wholes)
   uint32_t mant = usartdiv / 100u;
+  // extract fractional part, then round
+  // fractional part is kept on 4 bits, so to extract it it is divided by 16
+  // therefore, to write it, we multiply it by 16
   uint32_t frac = (((usartdiv - (mant * 100u)) * 16u) + 50u) / 100U;
-  mant += frac / 16u;
+  // add potential overflow to mantisa
+  uint32_t overflow = frac / 16u;
+  mant += overflow;
+  frac -= overflow;
   MODIFY_REG(
     _USART->BRR,
     USART_BRR_DIV_Fraction | USART_BRR_DIV_Mantissa,
@@ -29,9 +37,8 @@ void USART::init()
   SET_BIT(_USART->CR1, USART_CR1_TE);
   SET_BIT(_USART->CR1, USART_CR1_RE);
 
-  // Enable interrupt
-  if (_async)
-    HandlerHelper::set_handler(HandlerHelper::USART2_INT, __handle_uart_event, this);
+  // set interrupt handler
+  HandlerHelper::set_handler(HandlerHelper::USART2_INT, __handle_uart_event, this);
 
   // Enable USART
   SET_BIT(_USART->CR1, USART_CR1_UE);
@@ -49,6 +56,9 @@ void USART::handle_event(HandlerHelper::InterruptType /*itype*/)
       return;
     }
   }
+  // if we're here, no more left to send or we're locked and new data to send
+  // is written - in former case interrupts are not wanted anymore, in latter
+  // they will be enabled after data is written
   CLEAR_BIT(USART2->CR1, USART_CR1_TXEIE);
 }
 
@@ -64,23 +74,11 @@ void USART::send(uint8_t to_send)
 
 void USART::send(const char *to_send)
 {
-  if (_async)
-  {
-    lock();
-    _to_send = reinterpret_cast<const uint8_t*>(to_send);
-    _size = strlen(to_send);
-    unlock();
-    SET_BIT(USART2->CR1, USART_CR1_TXEIE);
-  }
-  else
-  {
-    while(*to_send)
-    {
-      while(!READ_BIT(_USART->SR, USART_SR_TXE))
-        ;
-      _USART->DR = *to_send++;
-    }
-  }
+  lock();
+  _to_send = reinterpret_cast<const uint8_t*>(to_send);
+  _size = strlen(to_send);
+  unlock();
+  SET_BIT(USART2->CR1, USART_CR1_TXEIE);
 }
 
 bool USART::is_sending()
