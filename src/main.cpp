@@ -85,9 +85,9 @@ int main(void)
   SET_BIT(RCC->APB2ENR, RCC_APB2ENR_TIM1EN);
   READ_BIT(RCC->APB2ENR, RCC_APB2ENR_TIM1EN);
 
-  // Enable clock for TIM14
-  SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM14EN);
-  READ_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM14EN);
+  // Enable clock for TIM2
+  SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM2EN);
+  READ_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM2EN);
 
   // Set PA5 as output (LED)
   MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE5, 0b01 << GPIO_MODER_MODE5_Pos);
@@ -161,7 +161,7 @@ int main(void)
 
   Timer::init();
 
-  Timer loop_timer(10);
+  Timer loop_timer(1000);
 
   for(;;)
   {
@@ -186,7 +186,7 @@ int main(void)
     {
       if (!clicked)
       {
-        clicked = true;
+        // clicked = true;
         // if (pwm_val == 2000)
         //   pwm_val = 750;
         // else
@@ -194,8 +194,10 @@ int main(void)
         // pwm.set(1, pwm_val);
         // imu.calibrate(50);
         // gyro_filter.reset_angles();
-        sprintf(str, "%lu\n", Timer::now());
+        sprintf(str, "%lu\n", TIM2->CNT);
         uart_usb.send(str);
+        // sprintf(str, "%lu %lu %u\n", loop_timer.now(), loop_timer._end, bool(loop_timer));
+        // uart_usb.send(str);
       }
     }
     else
@@ -203,7 +205,10 @@ int main(void)
       clicked = false;
     }
 
+    Delay(435);
     while(loop_timer)
       ;
+    sprintf(str, "%lu\n", TIM2->CNT);
+    uart_usb.send(str);
   }
 }

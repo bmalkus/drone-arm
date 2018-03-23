@@ -8,11 +8,12 @@
 /**
  * @brief Helper class for timing related functionalities
  *
- * Uses TIM14 to generate interrupts every second and updates internal _millis
- * counter. Objects, constructed with timeout parameter will be evaluated to
- * true until timeout is reached.
- * Counter in this class will overflow after ~49 days, but I doubt someone will fly a
- * drone constantly for 49 days ;)
+ * Uses TIM2 which is counting with 2kHz speed (atm config won't allow for it
+ * to be slower). Elapsed time is computed from CNT register of timer. Objects,
+ * constructed with timeout parameter will be evaluated to true until timeout
+ * is reached.
+ * TIM2 has 32-bit counter, so it will overflow after ~24 days, but I doubt I
+ * will fly a drone constantly for 24 days ;)
  */
 class Timer
 {
@@ -32,7 +33,8 @@ public:
   static uint32_t now();
 
   /**
-   * @brief Initializes timer that will be used to update _millis
+   * @brief Initializes timer whose counter will be used to retrieve
+   * milliseconds elapsed
    */
   static void init();
 
@@ -48,16 +50,11 @@ public:
    */
   operator bool() const;
 
-  volatile static uint32_t _millis; //!< used to keep milliseconds elapsed since init()
-
-  static TIM_TypeDef *_TIM; //!< CMSIS timer structure used to setup interrupts
+  static TIM_TypeDef *_TIM; //!< CMSIS timer structure for timer whose counter will be used
 
 private:
   uint32_t _end;
   uint32_t _timeout;
-
-  // returns milliseconds since last interrupt
-  static uint32_t curr_millis();
 };
 
 #endif /* TIMER_H */
