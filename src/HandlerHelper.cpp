@@ -23,4 +23,4 @@ void HandlerHelper::set_handler(InterruptType interrupt, handler_type handler, v
   handlers[interrupt] = {handler, user_data};
 }
 
-HandlerHelper::Handler HandlerHelper::handlers[16];
+HandlerHelper::Handler HandlerHelper::handlers[HandlerHelper::InterruptType::NO_OF_INTERRUPTS];

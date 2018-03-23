@@ -161,9 +161,11 @@ int main(void)
 
   Timer::init();
 
+  Timer loop_timer(10);
+
   for(;;)
   {
-    Delay(10);
+    loop_timer.restart();
 
     // imu.read_all();
 
@@ -200,5 +202,8 @@ int main(void)
     {
       clicked = false;
     }
+
+    while(loop_timer)
+      ;
   }
 }

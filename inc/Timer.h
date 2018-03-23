@@ -31,19 +31,32 @@ public:
    */
   static uint32_t now();
 
+  /**
+   * @brief Initializes timer that will be used to update _millis
+   */
   static void init();
 
+  /**
+   * @brief Restarts timer using timeout from constructor - timer will again be
+   * evaluated to true until timeout is reached
+   */
+  void restart();
+
+  /**
+   * @brief bool evaluation of timer, returns true until timeout is reached
+   * starting on construction or last restart()
+   */
   operator bool() const;
 
-  // used to keep milliseconds elapsed since init()
-  static uint32_t _millis;
+  volatile static uint32_t _millis; //!< used to keep milliseconds elapsed since init()
 
-  static TIM_TypeDef *_TIM;
+  static TIM_TypeDef *_TIM; //!< CMSIS timer structure used to setup interrupts
 
 private:
-  uint32_t _start;
   uint32_t _end;
+  uint32_t _timeout;
 
+  // returns milliseconds since last interrupt
   static uint32_t curr_millis();
 };
 

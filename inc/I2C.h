@@ -24,7 +24,6 @@ public:
    */
   I2C(I2C_TypeDef *I2C);
 
-  // TODO
   /**
    * @brief Initializes I2C peripheral
    *

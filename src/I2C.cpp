@@ -13,6 +13,7 @@ I2C::I2C(I2C_TypeDef *I2C):
 
 void I2C::init(uint32_t /*APB_freq_MHz*/, bool fs, uint8_t /*I2C_freq_kHz*/)
 {
+  // TODO: implement init properly
   CLEAR_BIT(_I2C->CR1, I2C_CR1_PE);
   READ_BIT(_I2C->CR1, I2C_CR1_PE);
 
@@ -43,6 +44,7 @@ void I2C::init(uint32_t /*APB_freq_MHz*/, bool fs, uint8_t /*I2C_freq_kHz*/)
   SET_BIT(_I2C->CR1, I2C_CR1_PE);
   READ_BIT(_I2C->CR1, I2C_CR1_PE);
 
+  // TODO: should be generic
   HandlerHelper::set_handler(HandlerHelper::I2C1_EV_INT, __handle_i2c_event, this);
 }
 

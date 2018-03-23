@@ -38,6 +38,7 @@ void USART::init()
   SET_BIT(_USART->CR1, USART_CR1_RE);
 
   // set interrupt handler
+  // TODO: should be generic
   HandlerHelper::set_handler(HandlerHelper::USART2_INT, __handle_uart_event, this);
 
   // Enable USART
@@ -59,7 +60,7 @@ void USART::handle_event(HandlerHelper::InterruptType /*itype*/)
   // if we're here, no more left to send or we're locked and new data to send
   // is written - in former case interrupts are not wanted anymore, in latter
   // they will be enabled after data is written
-  CLEAR_BIT(USART2->CR1, USART_CR1_TXEIE);
+  CLEAR_BIT(_USART->CR1, USART_CR1_TXEIE);
 }
 
 void USART::send(uint8_t to_send)
@@ -69,7 +70,7 @@ void USART::send(uint8_t to_send)
   _size = 1;
   _byte_to_send = to_send;
   unlock();
-  SET_BIT(USART2->CR1, USART_CR1_TXEIE);
+  SET_BIT(_USART->CR1, USART_CR1_TXEIE);
 }
 
 void USART::send(const char *to_send)
@@ -78,7 +79,7 @@ void USART::send(const char *to_send)
   _to_send = reinterpret_cast<const uint8_t*>(to_send);
   _size = strlen(to_send);
   unlock();
-  SET_BIT(USART2->CR1, USART_CR1_TXEIE);
+  SET_BIT(_USART->CR1, USART_CR1_TXEIE);
 }
 
 bool USART::is_sending()
@@ -101,6 +102,9 @@ bool USART::is_locked()
   return _lock;
 }
 
+// *****************************************************************************
+//  non-members
+// *****************************************************************************
 
 void __handle_uart_event(HandlerHelper::InterruptType itype, void *_usart)
 {

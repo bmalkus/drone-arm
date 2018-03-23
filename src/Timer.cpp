@@ -9,7 +9,7 @@ extern "C" void TIM8_TRG_COM_TIM14_IRQHandler()
   Timer::_millis += 1000;
 }
 
-uint32_t Timer::_millis;
+volatile uint32_t Timer::_millis;
 TIM_TypeDef *Timer::_TIM;
 
 uint32_t Timer::now()
@@ -43,8 +43,18 @@ uint32_t Timer::curr_millis()
   return _TIM->CNT >> 1;
 }
 
-Timer::Timer(uint32_t timeout)
+Timer::Timer(uint32_t timeout):
+  _timeout(timeout)
 {
-  _start = _millis + curr_millis();
-  _end = _start + timeout;
+  _end = _millis + curr_millis() + _timeout;
+}
+
+void Timer::restart()
+{
+  _end = _millis + curr_millis() + _timeout;
+}
+
+Timer::operator bool() const
+{
+  return now() < _end;
 }
