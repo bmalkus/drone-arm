@@ -1,12 +1,12 @@
-#ifndef SIMPLEFILTER_H
-#define SIMPLEFILTER_H
+#ifndef GYROANGLEFILTER_H
+#define GYROANGLEFILTER_H
 
 #include <IMU.h>
 
-class SimpleGyroFilter
+class GyroAngleFilter
 {
 public:
-  SimpleGyroFilter(float gyro_sensitivity, float delay);
+  GyroAngleFilter(float gyro_sensitivity, float delay);
 
   void set(const Readings &gyro, const Readings &acc);
 
@@ -21,4 +21,4 @@ private:
   Angles _angles{{0.f, 0.f, 0.f}};
 };
 
-#endif /* SIMPLEFILTER_H */
+#endif /* GYROANGLEFILTER_H */

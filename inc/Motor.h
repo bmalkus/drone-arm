@@ -22,15 +22,13 @@ union Controls
 {
   struct
   {
-    int16_t pitch;
-    int16_t roll;
-    int16_t yaw;
-    int16_t throttle;
+    float pitch;
+    float roll;
+    float yaw;
+    float throttle;
   };
-  int16_t data[4];
+  float data[4];
 };
-
-constexpr int16_t MOTOR_RESOLUTION = 1000;
 
 /**
  * @brief Class responsible for controlling single motor

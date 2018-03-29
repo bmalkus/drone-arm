@@ -4,7 +4,7 @@
 #include <IMU.h>
 #include <Motor.h>
 #include <PWM.h>
-#include <SimpleGyroFilter.h>
+#include <GyroSimpleFilter.h>
 #include <Timer.h>
 #include <USART.h>
 #include <utils.h>
@@ -144,7 +144,7 @@ int main(void)
 
   constexpr float gyro_sensitivity = ((1000.f * M_PI)/(180.f * ((2 << 15) - 1)));
 
-  SimpleGyroFilter gyro_filter(gyro_sensitivity, 0.005f);
+  GyroSimpleFilter gyro_filter(gyro_sensitivity);
 
   // set pins for PWM
   MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE8, 0b10 << GPIO_MODER_MODE8_Pos);
@@ -163,7 +163,7 @@ int main(void)
 
   Timer loop_timer(10);
 
-  bool low_speed = true;
+  uint8_t speed = 0;
 
   for(;;)
   {
@@ -176,7 +176,7 @@ int main(void)
 
     // gyro_filter.set(gyro, acc);
 
-    char str[128];
+    // char str[128];
 //    sprintf(str, "r %6d %6d %6d %6d %6d %6d\n", gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z);
     // Angles angles = gyro_filter.get_angles();
     // sprintf(str, "r %6.2f %6.2f %6.2f\n", angles.x, angles.y, angles.z);
@@ -192,15 +192,15 @@ int main(void)
           m1.arm();
         else
         {
-          if (!low_speed)
+          if (speed < 10)
           {
-            m1.disarm();
-            low_speed = true;
+            speed++;
+            m1.set({{0.f, 0.f, 0.f, speed / 10.f}});
           }
           else
           {
-            low_speed = false;
-            m1.set({{0, 0, 0, 500}});
+            speed = 0;
+            m1.disarm();
           }
         }
         clicked = true;
@@ -210,7 +210,6 @@ int main(void)
         //   pwm_val += 250;
         // pwm.set(1, pwm_val);
         // imu.calibrate(50);
-        // gyro_filter.reset_angles();
         // uart_usb.send(str);
         // sprintf(str, "%lu %lu %u\n", loop_timer.now(), loop_timer._end, bool(loop_timer));
         // uart_usb.send(str);

@@ -9,7 +9,7 @@ Motor::Motor(PWM *pwm, uint8_t channel, Multipliers multipliers):
   _init_timer(Timer(0))
 {
   _pwm_1_ms = _pwm->get_resolution() / 5;
-  _pwm_multiplier = ((9.f / 10.f) * _pwm_1_ms) / MOTOR_RESOLUTION;
+  _pwm_multiplier = ((9.f / 10.f) * _pwm_1_ms);
   _pwm_low_offset = _pwm_1_ms + (_pwm_1_ms * 0.1f);
 }
 
@@ -45,10 +45,13 @@ void Motor::disarm()
 void Motor::set(Controls controls)
 {
   if (!_armed)
+  {
     _pwm->set(_pwm_channel, _pwm_1_ms);
-  int16_t output = controls.throttle;
+    return;
+  }
+  float output = controls.throttle;
   for (uint8_t i = 0; i < 3; ++i)
     output += controls.data[i] * _multipliers.data[i];
-  output = clamp(output, static_cast<int16_t>(0), MOTOR_RESOLUTION);
-  _pwm->set(_pwm_channel, _pwm_low_offset + (_pwm_multiplier * output));
+  output = clamp(output, 0.f, 1.f);
+  _pwm->set(_pwm_channel, _pwm_low_offset + static_cast<uint16_t>(_pwm_multiplier * output));
 }

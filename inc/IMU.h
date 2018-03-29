@@ -21,6 +21,13 @@ union Angles {
   float xyz[3];
 };
 
+union AngularRates {
+  struct {
+    float pitch, roll, yaw;
+  };
+  float data[3];
+};
+
 /**
  * @brief Class responsible for managing IMU via i2c interface
  *
