@@ -19,6 +19,12 @@ class Timer
 {
 public:
   /**
+   * @brief Constructs default timer object, object will always be evaluated to
+   * true
+   */
+  Timer() = default;
+
+  /**
    * @brief Constructs timer object, object will be evaluated to true until
    * timeout is reached
    *

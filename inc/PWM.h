@@ -42,6 +42,8 @@ public:
    */
   void set(uint8_t channel, uint16_t val);
 
+  uint16_t get_resolution();
+
 private:
   TIM_TypeDef *_TIM;
   uint16_t _pwm_freq;

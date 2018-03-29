@@ -2,6 +2,7 @@
 
 #include <I2C.h>
 #include <IMU.h>
+#include <Motor.h>
 #include <PWM.h>
 #include <SimpleGyroFilter.h>
 #include <Timer.h>
@@ -128,17 +129,15 @@ int main(void)
   MODIFY_REG(GPIOB->OSPEEDR, GPIO_OSPEEDR_OSPEED9, 0b11 << GPIO_OSPEEDR_OSPEED9_Pos);
   MODIFY_REG(GPIOB->AFR[1], GPIO_AFRH_AFSEL9, 0b0100 << GPIO_AFRH_AFSEL9_Pos);
 
+  Timer::init();
+
   IMU imu(&mpu);
 
   uart_usb.init();
 
   imu.init();
 
-  // prescaler will internally be set to 180 - prescaler input is 180 MHz
-  // (APB2 x 2, as prescaler for APB2 > 1), output will be 1 MHz
   PWM pwm(TIM1, 200, 5000, 4);
-
-  pwm.init();
 
   // while (!imu.ready_to_read())
   //   ;
@@ -151,17 +150,20 @@ int main(void)
   MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE8, 0b10 << GPIO_MODER_MODE8_Pos);
   MODIFY_REG(GPIOA->AFR[1], GPIO_AFRH_AFSEL8, 0b0001 << GPIO_AFRH_AFSEL8_Pos);
 
-  pwm.set(1, 750);
-
+  pwm.init();
   pwm.start();
+
+  Motor m1(&pwm, 1, {{1, 1, 1}});
+  m1.init();
+
+  while(!m1.ready())
+    ;
 
   bool clicked = false;
 
-  // uint16_t pwm_val = 750;
+  Timer loop_timer(10);
 
-  Timer::init();
-
-  Timer loop_timer(1000);
+  bool low_speed = true;
 
   for(;;)
   {
@@ -186,7 +188,22 @@ int main(void)
     {
       if (!clicked)
       {
-        // clicked = true;
+        if (!m1.armed())
+          m1.arm();
+        else
+        {
+          if (!low_speed)
+          {
+            m1.disarm();
+            low_speed = true;
+          }
+          else
+          {
+            low_speed = false;
+            m1.set({{0, 0, 0, 500}});
+          }
+        }
+        clicked = true;
         // if (pwm_val == 2000)
         //   pwm_val = 750;
         // else
@@ -194,8 +211,7 @@ int main(void)
         // pwm.set(1, pwm_val);
         // imu.calibrate(50);
         // gyro_filter.reset_angles();
-        sprintf(str, "%lu\n", TIM2->CNT);
-        uart_usb.send(str);
+        // uart_usb.send(str);
         // sprintf(str, "%lu %lu %u\n", loop_timer.now(), loop_timer._end, bool(loop_timer));
         // uart_usb.send(str);
       }
@@ -205,10 +221,7 @@ int main(void)
       clicked = false;
     }
 
-    Delay(435);
     while(loop_timer)
       ;
-    sprintf(str, "%lu\n", TIM2->CNT);
-    uart_usb.send(str);
   }
 }

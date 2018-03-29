@@ -91,6 +91,11 @@ void PWM::set(uint8_t channel, uint16_t val)
   *_compare_regs[channel - 1] = val;
 }
 
+uint16_t PWM::get_resolution()
+{
+  return _resolution;
+}
+
 void PWM::trigger_update_event()
 {
   SET_BIT(_TIM->EGR, TIM_EGR_UG);

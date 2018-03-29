@@ -15,7 +15,7 @@ void SimpleGyroFilter::set(const Readings &gyro, const Readings &/* acc */)
   _angles.x += _gyro[0] + _gyro[1] * sin(_angles.y) * tan(_angles.y) + _gyro[2] * cos(_angles.x) * tan(_angles.y);
   _angles.y += _gyro[1] * cos(_angles.x) - _gyro[2] * sin(_angles.x);
   _angles.z += _gyro[1] * sin(_angles.x)/cos(_angles.y) + _gyro[2] * cos(_angles.x)/cos(_angles.y);
-  for (int i = 0; i < 3; ++i)
+  for (uint8_t i = 0; i < 3; ++i)
   {
     if (_angles.xyz[i] > 2*M_PI)
       _angles.xyz[i] -= 2*M_PI;
