@@ -6,6 +6,9 @@
 #include <stm32f4xx.h>
 
 #include <HandlerHelper.h>
+#include <utils.h>
+
+using rx_cb_type = void (*)(void*, uint8_t);
 
 /**
  * @brief Class responsible for managing USART interface
@@ -50,14 +53,20 @@ public:
    */
   bool is_sending();
 
+  void set_rx_callback(rx_cb_type cb, void *user_data=nullptr);
+  rx_cb_type clear_rx_callback();
+
 private:
   USART_TypeDef *_USART;
   uint32_t _baud_rate;
-  const uint8_t *_to_send;
-  uint32_t _size;
-  bool _lock;
+  const uint8_t * volatile _to_send;
+  volatile uint32_t _size;
+  volatile bool _lock;
 
   uint8_t _byte_to_send;
+
+  rx_cb_type _callback;
+  void *_user_data;
 
   void lock();
   void unlock();

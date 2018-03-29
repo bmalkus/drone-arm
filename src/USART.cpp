@@ -43,24 +43,8 @@ void USART::init()
 
   // Enable USART
   SET_BIT(_USART->CR1, USART_CR1_UE);
-}
 
-void USART::handle_event(HandlerHelper::InterruptType /*itype*/)
-{
-  SET_BIT(GPIOA->ODR, GPIO_ODR_OD5);
-  if (!is_locked())
-  {
-    if (_size > 0)
-    {
-      _USART->DR = _to_send == nullptr ? _byte_to_send : *_to_send++;
-      --_size;
-      return;
-    }
-  }
-  // if we're here, no more left to send or we're locked and new data to send
-  // is written - in former case interrupts are not wanted anymore, in latter
-  // they will be enabled after data is written
-  CLEAR_BIT(_USART->CR1, USART_CR1_TXEIE);
+  SET_BIT(_USART->CR1, USART_CR1_RXNEIE);
 }
 
 void USART::send(uint8_t to_send)
@@ -87,6 +71,22 @@ bool USART::is_sending()
   return _size > 0;
 }
 
+void USART::set_rx_callback(rx_cb_type cb, void *user_data)
+{
+  _callback = cb;
+  _user_data = user_data;
+  // SET_BIT(_USART->CR1, USART_CR1_RXNEIE);
+}
+
+rx_cb_type USART::clear_rx_callback()
+{
+  rx_cb_type ret = _callback;
+  _callback = nullptr;
+  _user_data = nullptr;
+  return ret;
+  // CLEAR_BIT(_USART->CR1, USART_CR1_RXNEIE);
+}
+
 void USART::lock()
 {
   _lock = true;
@@ -100,6 +100,36 @@ void USART::unlock()
 bool USART::is_locked()
 {
   return _lock;
+}
+
+void USART::handle_event(HandlerHelper::InterruptType /*itype*/)
+{
+  if (READ_BIT(_USART->SR, USART_SR_RXNE))
+  {
+    if (_callback != nullptr)
+    {
+      _callback(_user_data, _USART->DR);
+    }
+    else
+      CLEAR_BIT(_USART->SR, USART_SR_RXNE);
+  }
+  else
+  {
+    SET_BIT(GPIOA->ODR, GPIO_ODR_OD5);
+    if (!is_locked())
+    {
+      if (_size > 0)
+      {
+        _USART->DR = _to_send == nullptr ? _byte_to_send : *_to_send++;
+        --_size;
+        return;
+      }
+    }
+    // if we're here, no more left to send or we're locked and new data to send
+    // is written - in former case interrupts are not wanted anymore, in latter
+    // they will be enabled after data is written
+    CLEAR_BIT(_USART->CR1, USART_CR1_TXEIE);
+  }
 }
 
 // *****************************************************************************
