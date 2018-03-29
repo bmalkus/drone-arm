@@ -38,12 +38,24 @@ void USART::init()
   SET_BIT(_USART->CR1, USART_CR1_RE);
 
   // set interrupt handler
-  // TODO: should be generic
-  HandlerHelper::set_handler(HandlerHelper::USART2_INT, __handle_uart_event, this);
+  // ugly, but no idea how to do it nicer
+  if (_USART == USART1)
+    HandlerHelper::set_handler(HandlerHelper::USART1_INT, __handle_uart_event, this);
+  else if (_USART == USART2)
+    HandlerHelper::set_handler(HandlerHelper::USART2_INT, __handle_uart_event, this);
+  else if (_USART == USART3)
+    HandlerHelper::set_handler(HandlerHelper::USART3_INT, __handle_uart_event, this);
+  else if (_USART == UART4)
+    HandlerHelper::set_handler(HandlerHelper::UART4_INT, __handle_uart_event, this);
+  else if (_USART == UART5)
+    HandlerHelper::set_handler(HandlerHelper::UART5_INT, __handle_uart_event, this);
+  else if (_USART == USART6)
+    HandlerHelper::set_handler(HandlerHelper::USART6_INT, __handle_uart_event, this);
 
   // Enable USART
   SET_BIT(_USART->CR1, USART_CR1_UE);
 
+  // Enable RX interrupts
   SET_BIT(_USART->CR1, USART_CR1_RXNEIE);
 }
 
@@ -75,7 +87,6 @@ void USART::set_rx_callback(rx_cb_type cb, void *user_data)
 {
   _callback = cb;
   _user_data = user_data;
-  // SET_BIT(_USART->CR1, USART_CR1_RXNEIE);
 }
 
 rx_cb_type USART::clear_rx_callback()
@@ -84,7 +95,6 @@ rx_cb_type USART::clear_rx_callback()
   _callback = nullptr;
   _user_data = nullptr;
   return ret;
-  // CLEAR_BIT(_USART->CR1, USART_CR1_RXNEIE);
 }
 
 void USART::lock()

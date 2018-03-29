@@ -1,7 +1,12 @@
 #ifndef HANDLERHELPER_H
 #define HANDLERHELPER_H
 
+extern "C" void USART1_IRQHandler();
 extern "C" void USART2_IRQHandler();
+extern "C" void USART3_IRQHandler();
+extern "C" void UART4_IRQHandler();
+extern "C" void UART5_IRQHandler();
+extern "C" void USART6_IRQHandler();
 extern "C" void I2C1_EV_IRQHandler();
 
 /**
@@ -14,7 +19,12 @@ class HandlerHelper {
 
 public:
   enum InterruptType {
-    USART2_INT = 0,
+    USART1_INT = 0,
+    USART2_INT,
+    USART3_INT,
+    UART4_INT,
+    UART5_INT,
+    USART6_INT,
     I2C1_EV_INT,
     NO_OF_INTERRUPTS
   };
@@ -36,7 +46,12 @@ public:
 
   static void set_handler(InterruptType interrupt, handler_type handler, void *user_data);
 
+  friend void USART1_IRQHandler();
   friend void USART2_IRQHandler();
+  friend void USART3_IRQHandler();
+  friend void UART4_IRQHandler();
+  friend void UART5_IRQHandler();
+  friend void USART6_IRQHandler();
   friend void I2C1_EV_IRQHandler();
 };
 

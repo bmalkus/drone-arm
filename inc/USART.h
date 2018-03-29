@@ -39,6 +39,7 @@ public:
    * @param to_send char array (string) to send
    */
   void send(const char *to_send);
+
   /**
    * @brief Sends single byte via interface
    *
@@ -53,7 +54,16 @@ public:
    */
   bool is_sending();
 
+  /**
+   * @brief Sets callback to be called when data arrives
+   */
   void set_rx_callback(rx_cb_type cb, void *user_data=nullptr);
+
+  /**
+   * @brief Clears callback for arriving data
+   *
+   * @return Pointer to last set callback
+   */
   rx_cb_type clear_rx_callback();
 
 private:
