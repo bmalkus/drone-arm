@@ -1,5 +1,6 @@
 #include <stm32f4xx.h>
 
+#include <Context.h>
 #include <I2C.h>
 #include <IMU.h>
 #include <Motor.h>
@@ -7,12 +8,13 @@
 #include <GyroSimpleFilter.h>
 #include <Timer.h>
 #include <USART.h>
+#include <USARTHelper.h>
 #include <utils.h>
 
 #include <cstdio>
 #include <cmath>
 
-
+Context context;
 USART uart_usb(USART2, 115200);
 I2C mpu(I2C1);
 
@@ -134,6 +136,9 @@ int main(void)
   IMU imu(&mpu);
 
   uart_usb.init();
+  context.uart_usb = &uart_usb;
+
+  USARTHelper helper(&context);
 
   imu.init();
 
@@ -155,6 +160,7 @@ int main(void)
 
   Motor m1(&pwm, 1, {{1, 1, 1}});
   m1.init();
+  context.motors[0] = &m1;
 
   while(!m1.ready())
     ;

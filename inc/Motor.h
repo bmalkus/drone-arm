@@ -48,18 +48,21 @@ public:
 
   void set(Controls controls);
 
+  float current();
+
 private:
+  float _current;
+
   PWM *_pwm;
-  float _pwm_multiplier;
-
-  uint16_t _pwm_1_ms;
-  uint16_t _pwm_low_offset;
-
   uint8_t _pwm_channel;
   Multipliers _multipliers;
   bool _armed;
   bool _init_called;
   Timer _init_timer;
+
+  float _pwm_multiplier;
+  uint16_t _pwm_1_ms;
+  uint16_t _pwm_low_offset;
 };
 
 #endif /* MOTOR_H */

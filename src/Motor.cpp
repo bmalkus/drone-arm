@@ -53,5 +53,11 @@ void Motor::set(Controls controls)
   for (uint8_t i = 0; i < 3; ++i)
     output += controls.data[i] * _multipliers.data[i];
   output = clamp(output, 0.f, 1.f);
+  _current = output;
   _pwm->set(_pwm_channel, _pwm_low_offset + static_cast<uint16_t>(_pwm_multiplier * output));
+}
+
+float Motor::current()
+{
+  return _current;
 }
