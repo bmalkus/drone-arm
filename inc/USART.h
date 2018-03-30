@@ -38,7 +38,7 @@ public:
    *
    * @param to_send char array (string) to send
    */
-  void send(const char *to_send);
+  void send(const char *to_send, cb_type cb=nullptr, void *user_data=nullptr);
 
   /**
    * @brief Sends single byte via interface
@@ -69,14 +69,18 @@ public:
 private:
   USART_TypeDef *_USART;
   uint32_t _baud_rate;
-  const uint8_t * volatile _to_send;
-  volatile uint32_t _size;
-  volatile bool _lock;
+
+  const uint8_t *volatile _to_send = nullptr;
+  volatile uint32_t _size = 0;
+  volatile bool _lock = false;
 
   uint8_t _byte_to_send;
 
-  rx_cb_type _callback;
-  void *_user_data;
+  cb_type _done_cb = nullptr;
+  void *_done_cb_user_data = nullptr;
+
+  rx_cb_type _rx_cb = nullptr;
+  void *_rx_cb_user_data = nullptr;
 
   void lock();
   void unlock();

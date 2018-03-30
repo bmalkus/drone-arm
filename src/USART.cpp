@@ -3,7 +3,8 @@
 #include <cstring>
 
 USART::USART(USART_TypeDef *USART, uint32_t baud_rate):
-  _USART(USART), _baud_rate(baud_rate)
+  _USART(USART),
+  _baud_rate(baud_rate)
 {
   // empty
 }
@@ -69,11 +70,13 @@ void USART::send(uint8_t to_send)
   SET_BIT(_USART->CR1, USART_CR1_TXEIE);
 }
 
-void USART::send(const char *to_send)
+void USART::send(const char *to_send, cb_type cb, void *user_data)
 {
   lock();
   _to_send = reinterpret_cast<const uint8_t*>(to_send);
   _size = strlen(to_send);
+  _done_cb = cb;
+  _done_cb_user_data = user_data;
   unlock();
   SET_BIT(_USART->CR1, USART_CR1_TXEIE);
 }
@@ -85,15 +88,15 @@ bool USART::is_sending()
 
 void USART::set_rx_callback(rx_cb_type cb, void *user_data)
 {
-  _callback = cb;
-  _user_data = user_data;
+  _rx_cb = cb;
+  _rx_cb_user_data = user_data;
 }
 
 rx_cb_type USART::clear_rx_callback()
 {
-  rx_cb_type ret = _callback;
-  _callback = nullptr;
-  _user_data = nullptr;
+  rx_cb_type ret = _rx_cb;
+  _rx_cb = nullptr;
+  _rx_cb_user_data = nullptr;
   return ret;
 }
 
@@ -116,16 +119,17 @@ void USART::handle_event(HandlerHelper::InterruptType /*itype*/)
 {
   if (READ_BIT(_USART->SR, USART_SR_RXNE))
   {
-    if (_callback != nullptr)
+    // received bit
+    if (_rx_cb != nullptr)
     {
-      _callback(_user_data, _USART->DR);
+      _rx_cb(_rx_cb_user_data, _USART->DR);
     }
     else
       CLEAR_BIT(_USART->SR, USART_SR_RXNE);
   }
   else
   {
-    SET_BIT(GPIOA->ODR, GPIO_ODR_OD5);
+    // sent bit
     if (!is_locked())
     {
       if (_size > 0)
@@ -134,11 +138,17 @@ void USART::handle_event(HandlerHelper::InterruptType /*itype*/)
         --_size;
         return;
       }
+      else
+      {
+        CLEAR_BIT(_USART->CR1, USART_CR1_TXEIE);
+        if (_done_cb != nullptr)
+          _done_cb(_done_cb_user_data);
+        _done_cb = nullptr;
+        _done_cb_user_data = nullptr;
+      }
     }
-    // if we're here, no more left to send or we're locked and new data to send
-    // is written - in former case interrupts are not wanted anymore, in latter
-    // they will be enabled after data is written
-    CLEAR_BIT(_USART->CR1, USART_CR1_TXEIE);
+    else
+      CLEAR_BIT(_USART->CR1, USART_CR1_TXEIE);
   }
 }
 

@@ -6,6 +6,7 @@
 #include <Motor.h>
 #include <PWM.h>
 #include <GyroSimpleFilter.h>
+#include <SimplePID.h>
 #include <Timer.h>
 #include <USART.h>
 #include <USARTHelper.h>
@@ -144,10 +145,10 @@ int main(void)
 
   PWM pwm(TIM1, 200, 5000, 4);
 
-  // while (!imu.ready_to_read())
-  //   ;
+  while (!imu.ready_to_read())
+    ;
 
-  constexpr float gyro_sensitivity = ((1000.f * M_PI)/(180.f * ((2 << 15) - 1)));
+  constexpr float gyro_sensitivity = ((250.f * M_PI)/(180.f * ((1 << 15) - 1)));
 
   GyroSimpleFilter gyro_filter(gyro_sensitivity);
 
@@ -155,12 +156,19 @@ int main(void)
   MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE8, 0b10 << GPIO_MODER_MODE8_Pos);
   MODIFY_REG(GPIOA->AFR[1], GPIO_AFRH_AFSEL8, 0b0001 << GPIO_AFRH_AFSEL8_Pos);
 
+  MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE9, 0b10 << GPIO_MODER_MODE9_Pos);
+  MODIFY_REG(GPIOA->AFR[1], GPIO_AFRH_AFSEL9, 0b0001 << GPIO_AFRH_AFSEL9_Pos);
+
   pwm.init();
   pwm.start();
 
   Motor m1(&pwm, 1, {{1, 1, 1}});
+  Motor m3(&pwm, 2, {{-1, -1, 1}});
+
   m1.init();
+  m3.init();
   context.motors[0] = &m1;
+  context.motors[2] = &m3;
 
   while(!m1.ready())
     ;
@@ -171,42 +179,56 @@ int main(void)
 
   uint8_t speed = 0;
 
+  SimplePID pid;
+
+  Readings gyro;
+  AngularRates rates;
+  Controls controls;
+
+  context.readings = &gyro;
+  context.angular_rates = &rates;
+  context.controls = &controls;
+  context.pid = &pid;
+
+  imu.read_all();
+
   for(;;)
   {
     loop_timer.restart();
 
-    // imu.read_all();
+    helper.next_iter();
 
-    // Readings gyro = imu.gyro();
-    // Readings acc = imu.acc();
+    gyro = imu.gyro();
 
-    // gyro_filter.set(gyro, acc);
+    rates = gyro_filter.process(gyro);
 
-    // char str[128];
-//    sprintf(str, "r %6d %6d %6d %6d %6d %6d\n", gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z);
-    // Angles angles = gyro_filter.get_angles();
-    // sprintf(str, "r %6.2f %6.2f %6.2f\n", angles.x, angles.y, angles.z);
-    // sprintf(str, "%d\n", TIM1->CNT);
-    // sprintf(str, "123\n");
-//    if (!uart_usb.is_sending())
+    controls = pid.process(rates, {{0.f, 0.f, 0.f, speed / 10.f}});
+
+    m1.set(controls);
+    m3.set(controls);
 
     if (READ_BIT(GPIOC->IDR, GPIO_IDR_ID13) == 0)
     {
       if (!clicked)
       {
         if (!m1.armed())
+        {
           m1.arm();
+          m3.arm();
+        }
         else
         {
           if (speed < 10)
           {
             speed++;
-            m1.set({{0.f, 0.f, 0.f, speed / 10.f}});
+            // m1.set({{0.f, 0.f, 0.f, speed / 10.f}});
+            // m3.set({{0.f, 0.f, 0.f, 0.5f - speed / 10.f}});
           }
           else
           {
             speed = 0;
             m1.disarm();
+            m3.disarm();
           }
         }
         clicked = true;
@@ -222,11 +244,25 @@ int main(void)
       }
     }
     else
-    {
       clicked = false;
-    }
+
+    imu.read_all();
 
     while(loop_timer)
       ;
+
+
+
+    // Readings acc = imu.acc();
+
+    // gyro_filter.set(gyro, acc);
+
+    // char str[128];
+//    sprintf(str, "r %6d %6d %6d %6d %6d %6d\n", gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z);
+    // Angles angles = gyro_filter.get_angles();
+    // sprintf(str, "r %6.2f %6.2f %6.2f\n", angles.x, angles.y, angles.z);
+    // sprintf(str, "%d\n", TIM1->CNT);
+    // sprintf(str, "123\n");
+//    if (!uart_usb.is_sending())
   }
 }

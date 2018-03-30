@@ -27,6 +27,18 @@ T clamp(T val, T lo, T hi)
   return max(min(val, hi), lo);
 }
 
+union StickInputs
+{
+  struct
+  {
+    float roll;
+    float pitch;
+    float yaw;
+    float throttle;
+  };
+  float data[4];
+};
+
 // int __io_putchar(int c);
 
 #endif /* UTILS_H */
