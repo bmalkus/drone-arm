@@ -31,10 +31,11 @@ public:
 private:
   Coefficients _coeffs;
 
-  static constexpr uint8_t KEEP = 3;
+  AngularRates _errors[2];
+  uint8_t _curr_errors = 0;
 
-  float _errors[KEEP][3];
-  uint8_t _newest = 0;
+  AngularRates _cumulated_error = {{0.f, 0.f, 0.f}};
+  StickInputs _prev_inputs;
 };
 
 #endif /* SIMPLEPID_H */

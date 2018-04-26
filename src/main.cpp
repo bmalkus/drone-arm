@@ -145,8 +145,8 @@ int main(void)
 
   PWM pwm(TIM1, 200, 5000, 4);
 
-  while (!imu.ready_to_read())
-    ;
+  // while (!imu.ready_to_read())
+  //   ;
 
   constexpr float gyro_sensitivity = ((250.f * M_PI)/(180.f * ((1 << 15) - 1)));
 
@@ -162,8 +162,8 @@ int main(void)
   pwm.init();
   pwm.start();
 
-  Motor m1(&pwm, 1, {{1, 1, 1}});
-  Motor m3(&pwm, 2, {{-1, -1, 1}});
+  Motor m1(&pwm, 1, {{-1, -1, 0}});
+  Motor m3(&pwm, 2, {{1, 1, 0}});
 
   m1.init();
   m3.init();

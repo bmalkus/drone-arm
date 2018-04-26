@@ -1,5 +1,8 @@
 #include <Motor.h>
 
+constexpr float THROTTLE_MULTIPLIER = 0.8f;
+constexpr float THROTTLE_OFFSET = (1.f - THROTTLE_MULTIPLIER) / 2.f;
+
 Motor::Motor(PWM *pwm, uint8_t channel, Multipliers multipliers):
   _pwm(pwm),
   _pwm_channel(channel),
@@ -8,6 +11,8 @@ Motor::Motor(PWM *pwm, uint8_t channel, Multipliers multipliers):
   _init_called(false),
   _init_timer(Timer(0))
 {
+  // for (uint8_t i = 0; i < 3; ++i)
+  //   _multipliers.data[i] *= PID_MULTIPLIER;
   _pwm_1_ms = _pwm->get_resolution() / 5;
   _pwm_multiplier = ((9.f / 10.f) * _pwm_1_ms);
   _pwm_low_offset = _pwm_1_ms + (_pwm_1_ms * 0.1f);
@@ -49,7 +54,7 @@ void Motor::set(Controls controls)
     _pwm->set(_pwm_channel, _pwm_1_ms);
     return;
   }
-  float output = controls.throttle;
+  float output = THROTTLE_OFFSET + controls.throttle * THROTTLE_MULTIPLIER;
   for (uint8_t i = 0; i < 3; ++i)
     output += controls.data[i] * _multipliers.data[i];
   output = clamp(output, 0.f, 1.f);

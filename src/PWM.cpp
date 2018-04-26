@@ -27,7 +27,7 @@ void PWM::init()
 
   // TODO: adjust to usage of timers clocked by APB1
   APB_presc_shift = APBPrescTable[READ_VAL(RCC->CFGR, RCC_CFGR_PPRE2)];
-  uint32_t clk = SystemCoreClock >> min(APB_presc_shift - 1, 0);
+  uint32_t clk = SystemCoreClock >> max(APB_presc_shift - 1, 0);
   _TIM->PSC = (clk / (_pwm_freq * _resolution)) - 1;
   _TIM->ARR = _resolution - 1;
 
