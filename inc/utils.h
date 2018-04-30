@@ -1,6 +1,8 @@
 #ifndef UTILS_H
 #define UTILS_H
 
+#include <cstddef>
+
 #include <stm32f4xx.h>
 
 #define READ_VAL(REG, PART) (((REG) & (PART##_Msk)) >> (PART##_Pos))
@@ -26,6 +28,9 @@ T clamp(T val, T lo, T hi)
 {
   return max(min(val, hi), lo);
 }
+
+template<class T, size_t N>
+constexpr size_t arr_size(T (&)[N]) { return N; }
 
 union StickInputs
 {

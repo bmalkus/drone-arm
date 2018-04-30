@@ -1,6 +1,8 @@
 #ifndef HANDLERHELPER_H
 #define HANDLERHELPER_H
 
+#include <stm32f4xx.h>
+
 extern "C" void USART1_IRQHandler();
 extern "C" void USART2_IRQHandler();
 extern "C" void USART3_IRQHandler();
@@ -8,6 +10,13 @@ extern "C" void UART4_IRQHandler();
 extern "C" void UART5_IRQHandler();
 extern "C" void USART6_IRQHandler();
 extern "C" void I2C1_EV_IRQHandler();
+extern "C" void TIM1_BRK_TIM9_IRQHandler();
+extern "C" void TIM1_TRG_COM_TIM11_IRQHandler();
+extern "C" void TIM3_IRQHandler();
+extern "C" void TIM4_IRQHandler();
+extern "C" void TIM5_IRQHandler();
+extern "C" void TIM6_DAC_IRQHandler();
+extern "C" void TIM8_CC_IRQHandler();
 
 /**
  * @brief Helper class used to set interrupt handlers and to call them with
@@ -19,6 +28,7 @@ class HandlerHelper {
 
 public:
   enum InterruptType {
+    INVALID = -1, // dummy - to return from interrupt_for()
     USART1_INT = 0,
     USART2_INT,
     USART3_INT,
@@ -26,6 +36,13 @@ public:
     UART5_INT,
     USART6_INT,
     I2C1_EV_INT,
+    TIM1_BRK_TIM9_INT,
+    TIM1_TRG_COM_TIM11_INT,
+    TIM3_INT,
+    TIM4_INT,
+    TIM5_INT,
+    TIM6_DAC_INT,
+    TIM8_CC_INT,
     NO_OF_INTERRUPTS
   };
 
@@ -46,6 +63,24 @@ public:
 
   static void set_handler(InterruptType interrupt, handler_type handler, void *user_data);
 
+  static constexpr HandlerHelper::InterruptType interrupt_for(TIM_TypeDef *TIM) {
+    if (TIM == TIM3)
+      return InterruptType::TIM3_INT;
+    else if (TIM == TIM4)
+      return InterruptType::TIM4_INT;
+    else if (TIM == TIM5)
+      return InterruptType::TIM5_INT;
+    else if (TIM == TIM6)
+      return InterruptType::TIM6_DAC_INT;
+    else if (TIM == TIM8)
+      return InterruptType::TIM8_CC_INT;
+    else if (TIM == TIM9)
+      return InterruptType::TIM1_BRK_TIM9_INT;
+    else if (TIM == TIM11)
+      return InterruptType::TIM1_TRG_COM_TIM11_INT;
+    return InterruptType::INVALID;
+  }
+
   friend void USART1_IRQHandler();
   friend void USART2_IRQHandler();
   friend void USART3_IRQHandler();
@@ -53,6 +88,13 @@ public:
   friend void UART5_IRQHandler();
   friend void USART6_IRQHandler();
   friend void I2C1_EV_IRQHandler();
+  friend void TIM1_BRK_TIM9_IRQHandler();
+  friend void TIM1_TRG_COM_TIM11_IRQHandler();
+  friend void TIM3_IRQHandler();
+  friend void TIM4_IRQHandler();
+  friend void TIM5_IRQHandler();
+  friend void TIM6_DAC_IRQHandler();
+  friend void TIM8_CC_IRQHandler();
 };
 
 #endif /* HANDLERHELPER_H */

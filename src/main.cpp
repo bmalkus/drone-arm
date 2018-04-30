@@ -5,6 +5,7 @@
 #include <IMU.h>
 #include <Motor.h>
 #include <PWM.h>
+#include <PWMinput.h>
 #include <GyroSimpleFilter.h>
 #include <SimplePID.h>
 #include <Timer.h>
@@ -93,6 +94,26 @@ int main(void)
   SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM2EN);
   READ_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM2EN);
 
+  // Enable clock for TIM3
+  SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM3EN);
+  READ_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM3EN);
+
+  // Enable clock for TIM4
+  SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM4EN);
+  READ_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM4EN);
+
+  // Enable clock for TIM5
+  SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM5EN);
+  READ_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM5EN);
+
+  // Enable clock for TIM6
+  SET_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM6EN);
+  READ_BIT(RCC->APB1ENR, RCC_APB1ENR_TIM6EN);
+
+  // Enable clock for TIM8
+  SET_BIT(RCC->APB2ENR, RCC_APB2ENR_TIM8EN);
+  READ_BIT(RCC->APB2ENR, RCC_APB2ENR_TIM8EN);
+
   // Set PA5 as output (LED)
   MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE5, 0b01 << GPIO_MODER_MODE5_Pos);
 
@@ -117,6 +138,11 @@ int main(void)
   // Enable NVIC interrupts
   NVIC_EnableIRQ(USART2_IRQn);
   NVIC_EnableIRQ(I2C1_EV_IRQn);
+  NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn);
+  NVIC_EnableIRQ(TIM3_IRQn);
+  NVIC_EnableIRQ(TIM4_IRQn);
+  NVIC_EnableIRQ(TIM5_IRQn);
+  NVIC_EnableIRQ(TIM8_CC_IRQn);
 
   // Set I2C pins
   // PB8 PA9
@@ -143,7 +169,14 @@ int main(void)
 
   imu.init();
 
-  PWM pwm(TIM1, 200, 5000, 4);
+  // PWM pwm(TIM1, 200, 5000, 4);
+  PWMinput pwm_in[] =
+  {
+    PWMinput(TIM3, 1000 * 1000),
+    PWMinput(TIM4, 1000 * 1000),
+    PWMinput(TIM5, 1000 * 1000),
+    PWMinput(TIM11, 1000 * 1000)
+  };
 
   // while (!imu.ready_to_read())
   //   ;
@@ -153,31 +186,53 @@ int main(void)
   GyroSimpleFilter gyro_filter(gyro_sensitivity);
 
   // set pins for PWM
+  // PA8, PA9
   MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE8, 0b10 << GPIO_MODER_MODE8_Pos);
   MODIFY_REG(GPIOA->AFR[1], GPIO_AFRH_AFSEL8, 0b0001 << GPIO_AFRH_AFSEL8_Pos);
 
   MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE9, 0b10 << GPIO_MODER_MODE9_Pos);
   MODIFY_REG(GPIOA->AFR[1], GPIO_AFRH_AFSEL9, 0b0001 << GPIO_AFRH_AFSEL9_Pos);
 
-  pwm.init();
-  pwm.start();
+  // set pins for PWM input
+  // PC6, PB6, PA0, PB9
+  // TIM3, TIM4, TIM5, TIM6
+  MODIFY_REG(GPIOC->MODER, GPIO_MODER_MODE6, 0b10 << GPIO_MODER_MODE6_Pos);
+  MODIFY_REG(GPIOC->AFR[0], GPIO_AFRL_AFSEL6, 0b0010 << GPIO_AFRL_AFSEL6_Pos);
 
-  Motor m1(&pwm, 1, {{-1, -1, 0}});
-  Motor m3(&pwm, 2, {{1, 1, 0}});
+  MODIFY_REG(GPIOB->MODER, GPIO_MODER_MODE6, 0b10 << GPIO_MODER_MODE6_Pos);
+  MODIFY_REG(GPIOB->AFR[0], GPIO_AFRL_AFSEL6, 0b0010 << GPIO_AFRL_AFSEL6_Pos);
 
-  m1.init();
-  m3.init();
-  context.motors[0] = &m1;
-  context.motors[2] = &m3;
+  MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE0, 0b10 << GPIO_MODER_MODE0_Pos);
+  MODIFY_REG(GPIOA->AFR[0], GPIO_AFRL_AFSEL0, 0b0010 << GPIO_AFRL_AFSEL0_Pos);
 
-  while(!m1.ready())
-    ;
+  MODIFY_REG(GPIOB->MODER, GPIO_MODER_MODE9, 0b10 << GPIO_MODER_MODE9_Pos);
+  MODIFY_REG(GPIOB->AFR[1], GPIO_AFRH_AFSEL9, 0b0011 << GPIO_AFRH_AFSEL9_Pos);
 
-  bool clicked = false;
+  // pwm.init();
+  // pwm.start();
+
+  for (size_t i = 0; i < arr_size(pwm_in); ++i)
+  {
+    pwm_in[i].init();
+    pwm_in[i].start();
+  }
+
+  // Motor m1(&pwm, 1, {{-1, -1, 0}});
+  // Motor m3(&pwm, 2, {{1, 1, 0}});
+
+  // m1.init();
+  // m3.init();
+  // context.motors[0] = &m1;
+  // context.motors[2] = &m3;
+
+  // while(!m1.ready())
+  //   ;
+
+  // bool clicked = false;
 
   Timer loop_timer(10);
 
-  uint8_t speed = 0;
+  // uint8_t speed = 0;
 
   SimplePID pid;
 
@@ -196,57 +251,67 @@ int main(void)
   {
     loop_timer.restart();
 
-    helper.next_iter();
+    // helper.next_iter();
 
-    gyro = imu.gyro();
+    // gyro = imu.gyro();
 
-    rates = gyro_filter.process(gyro);
+    // rates = gyro_filter.process(gyro);
 
-    controls = pid.process(rates, {{0.f, 0.f, 0.f, speed / 10.f}});
+    // controls = pid.process(rates, {{0.f, 0.f, 0.f, speed / 10.f}});
 
-    m1.set(controls);
-    m3.set(controls);
+    // m1.set(controls);
+    // m3.set(controls);
 
-    if (READ_BIT(GPIOC->IDR, GPIO_IDR_ID13) == 0)
-    {
-      if (!clicked)
-      {
-        if (!m1.armed())
-        {
-          m1.arm();
-          m3.arm();
-        }
-        else
-        {
-          if (speed < 10)
-          {
-            speed++;
-            // m1.set({{0.f, 0.f, 0.f, speed / 10.f}});
-            // m3.set({{0.f, 0.f, 0.f, 0.5f - speed / 10.f}});
-          }
-          else
-          {
-            speed = 0;
-            m1.disarm();
-            m3.disarm();
-          }
-        }
-        clicked = true;
-        // if (pwm_val == 2000)
-        //   pwm_val = 750;
-        // else
-        //   pwm_val += 250;
-        // pwm.set(1, pwm_val);
-        // imu.calibrate(50);
-        // uart_usb.send(str);
-        // sprintf(str, "%lu %lu %u\n", loop_timer.now(), loop_timer._end, bool(loop_timer));
-        // uart_usb.send(str);
-      }
-    }
-    else
-      clicked = false;
+    int c1, c2, c3, c4;
+    c1 = pwm_in[0].get();
+    c2 = pwm_in[1].get();
+    c3 = pwm_in[2].get();
+    c4 = pwm_in[3].get();
 
-    imu.read_all();
+    char str[128];
+    sprintf(str, "%d %d %d %d\n", c1, c2, c3, c4);
+    uart_usb.send(str);
+
+    // if (READ_BIT(GPIOC->IDR, GPIO_IDR_ID13) == 0)
+    // {
+      // if (!clicked)
+      // {
+      //   clicked = true;
+      //   if (!m1.armed())
+      //   {
+      //     m1.arm();
+      //     m3.arm();
+      //   }
+      //   else
+      //   {
+      //     if (speed < 10)
+      //     {
+      //       speed++;
+      //       // m1.set({{0.f, 0.f, 0.f, speed / 10.f}});
+      //       // m3.set({{0.f, 0.f, 0.f, 0.5f - speed / 10.f}});
+      //     }
+      //     else
+      //     {
+      //       speed = 0;
+      //       m1.disarm();
+      //       m3.disarm();
+      //     }
+      //   }
+      //   // if (pwm_val == 2000)
+      //   //   pwm_val = 750;
+      //   // else
+      //   //   pwm_val += 250;
+      //   // pwm.set(1, pwm_val);
+      //   // imu.calibrate(50);
+      //   // uart_usb.send(str);
+      //   // sprintf(str, "%lu %lu %u\n", loop_timer.now(), loop_timer._end, bool(loop_timer));
+      //   // uart_usb.send(str);
+      // }
+    // }
+    // else
+      // clicked = false;
+
+    // imu.read_all();
 
     while(loop_timer)
       ;
