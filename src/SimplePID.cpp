@@ -17,7 +17,7 @@ void SimplePID::set_coeff(PART part, float coeff)
   _coeffs.data[part] = coeff * SCALE_MULTIPLIER;
 }
 
-Controls SimplePID::process(AngularRates rates, StickInputs inputs)
+Controls SimplePID::process(AngularRates rates, Sticks inputs)
 {
   _curr_errors = 1 - _curr_errors;
 

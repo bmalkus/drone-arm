@@ -65,7 +65,7 @@ void PWMInput::stop()
 
 int32_t PWMInput::get(uint8_t channel)
 {
-  return _outputs[channel - 1];
+  return _outputs[channel];
 }
 
 void PWMInput::handle_event(HandlerHelper::InterruptType /*itype*/)

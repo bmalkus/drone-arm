@@ -49,6 +49,6 @@ set(SOURCE_FILES
         src/USART.cpp
         src/USARTHelper.cpp
         src/utils.cpp
-        startup/startup_stm32f446xx.s)
+        startup/startup_stm32f446xx.s inc/Sticks.cpp inc/Sticks.h)
 
 add_executable(HelloWorld ${SOURCE_FILES})

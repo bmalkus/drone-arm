@@ -1,3 +1,7 @@
+#include <cstdio>
+#include <cmath>
+#include <initializer_list>
+
 #include <stm32f4xx.h>
 
 #include <Context.h>
@@ -12,9 +16,7 @@
 #include <USART.h>
 #include <USARTHelper.h>
 #include <utils.h>
-
-#include <cstdio>
-#include <cmath>
+#include <Sticks.h>
 
 Context context;
 USART uart_usb(USART2, 115200);
@@ -170,7 +172,7 @@ int main(void)
   imu.init();
 
   // PWM pwm(TIM1, 200, 5000, 4);
-  PWMInput pwm_in(TIM3, 1'000'000, 4);
+  PWMInput main_inputs(TIM3, 1'000'000, 4);
 
   // while (!imu.ready_to_read())
   //   ;
@@ -205,8 +207,8 @@ int main(void)
   // pwm.init();
   // pwm.start();
 
-  pwm_in.init();
-  pwm_in.start();
+  main_inputs.init();
+  main_inputs.start();
 
   // Motor m1(&pwm, 1, {{-1, -1, 0}});
   // Motor m3(&pwm, 2, {{1, 1, 0}});
@@ -236,13 +238,15 @@ int main(void)
   context.controls = &controls;
   context.pid = &pid;
 
-  imu.read_all();
+  Sticks inputs;
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
   for(;;)
   {
     loop_timer.restart();
+
+    imu.read_all();
 
     // helper.next_iter();
 
@@ -255,14 +259,42 @@ int main(void)
     // m1.set(controls);
     // m3.set(controls);
 
-    int32_t c1 = 0, c2 = 0, c3 = 0, c4 = 0;
-    c1 = pwm_in.get(1);
-    c2 = pwm_in.get(2);
-    c3 = pwm_in.get(3);
-    c4 = pwm_in.get(4);
+    // variable used to check against lost PWM input
+    // if more than two channels are reported as zero
+    // (which mean there are no PWM inputs for them)
+    // zero all the inputs
+    uint8_t lost = 0;
+
+    auto th = main_inputs.get(Sticks::THROTTLE);
+    if (1000 <= th && th <= 2000)
+      inputs.throttle = (th - 1000) / 1000.f;
+    else if (th == 0)
+    {
+      inputs.throttle = 0.f;
+      ++lost;
+    }
+
+    for (auto ch : {Sticks::PITCH, Sticks::ROLL, Sticks::YAW})
+    {
+      auto val = main_inputs.get(ch);
+      if (1000 <= val && val <= 2000)
+        inputs.set(ch, (val - 1000) / 1000.f);
+      else if (val == 0)
+      {
+        inputs.set(ch, 0.f);
+        ++lost;
+      }
+    }
+
+    if (lost >= 3)
+      inputs.zero();
+
+    // wait for sensors data to be read
+    while (imu.is_busy())
+      ;
 
     char str[128];
-    sprintf(str, "%ld %ld %ld %ld\n", c1, c2, c3, c4);
+    sprintf(str, "%.02f %.02f %.02f %.02f\n", inputs.yaw, inputs.pitch, inputs.roll, inputs.throttle);
     uart_usb.send(str);
 
     // if (READ_BIT(GPIOC->IDR, GPIO_IDR_ID13) == 0)

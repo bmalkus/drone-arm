@@ -4,6 +4,7 @@
 #include <GyroSimpleFilter.h>
 #include <Motor.h>
 #include <utils.h>
+#include "Sticks.h"
 
 union Coefficients
 {
@@ -26,7 +27,7 @@ public:
 
   void set_coeff(PART part, float coeff);
 
-  Controls process(AngularRates rates, StickInputs inputs);
+  Controls process(AngularRates rates, Sticks inputs);
 
 private:
   Coefficients _coeffs;
@@ -35,7 +36,7 @@ private:
   uint8_t _curr_errors = 0;
 
   AngularRates _cumulated_error = {{0.f, 0.f, 0.f}};
-  StickInputs _prev_inputs;
+  Sticks _prev_inputs;
 };
 
 #endif /* SIMPLEPID_H */
