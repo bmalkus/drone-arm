@@ -48,13 +48,13 @@ public:
    * @brief Restarts timer using timeout from constructor - timer will again be
    * evaluated to true until timeout is reached
    */
-  void restart();
+  void restart() volatile;
 
   /**
    * @brief bool evaluation of timer, returns true until timeout is reached
    * starting on construction or last restart()
    */
-  operator bool() const;
+  operator bool() const volatile;
 
   static TIM_TypeDef *_TIM; //!< CMSIS timer structure for timer whose counter will be used
 

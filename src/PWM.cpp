@@ -35,21 +35,21 @@ void PWM::init()
   // output for each channel
   switch (_channels)
   {
-    case 4:
-      SET_BIT(_TIM->CCER, TIM_CCER_CC4E);
-      MODIFY_REG(_TIM->CCMR2, TIM_CCMR2_OC4M_Msk, 0b110 << TIM_CCMR2_OC4M_Pos);
-      // yup, fall-through
-    case 3:
-      SET_BIT(_TIM->CCER, TIM_CCER_CC3E);
-      MODIFY_REG(_TIM->CCMR2, TIM_CCMR2_OC3M_Msk, 0b110 << TIM_CCMR2_OC3M_Pos);
-      // still falling
-    case 2:
-      SET_BIT(_TIM->CCER, TIM_CCER_CC2E);
-      MODIFY_REG(_TIM->CCMR1, TIM_CCMR1_OC2M_Msk, 0b110 << TIM_CCMR1_OC2M_Pos);
-      // to this day
-    case 1:
-      SET_BIT(_TIM->CCER, TIM_CCER_CC1E);
-      MODIFY_REG(_TIM->CCMR1, TIM_CCMR1_OC1M_Msk, 0b110 << TIM_CCMR1_OC1M_Pos);
+  case 4:
+    SET_BIT(_TIM->CCER, TIM_CCER_CC4E);
+    MODIFY_REG(_TIM->CCMR2, TIM_CCMR2_OC4M_Msk, 0b110 << TIM_CCMR2_OC4M_Pos);
+    // fall-through
+  case 3:
+    SET_BIT(_TIM->CCER, TIM_CCER_CC3E);
+    MODIFY_REG(_TIM->CCMR2, TIM_CCMR2_OC3M_Msk, 0b110 << TIM_CCMR2_OC3M_Pos);
+    // fall-through
+  case 2:
+    SET_BIT(_TIM->CCER, TIM_CCER_CC2E);
+    MODIFY_REG(_TIM->CCMR1, TIM_CCMR1_OC2M_Msk, 0b110 << TIM_CCMR1_OC2M_Pos);
+    // fall-through
+  case 1:
+    SET_BIT(_TIM->CCER, TIM_CCER_CC1E);
+    MODIFY_REG(_TIM->CCMR1, TIM_CCMR1_OC1M_Msk, 0b110 << TIM_CCMR1_OC1M_Pos);
   }
 
   // trigger event to update real registers with preloaded values
@@ -71,17 +71,17 @@ void PWM::stop()
   // reset counter values
   switch (_channels)
   {
-    case 4:
-      _TIM->CCR4 = 0;
-      // another fall-through?!
-    case 3:
-      _TIM->CCR3 = 0;
-      // yep, another
-    case 2:
-      _TIM->CCR2 = 0;
-      // falling further
-    case 1:
-      _TIM->CCR1 = 0;
+  case 4:
+    _TIM->CCR4 = 0;
+    // fall-through
+  case 3:
+    _TIM->CCR3 = 0;
+    // fall-through
+  case 2:
+    _TIM->CCR2 = 0;
+    // fall-through
+  case 1:
+    _TIM->CCR1 = 0;
   }
   trigger_update_event();
 }

@@ -5,7 +5,7 @@
 #include <IMU.h>
 #include <Motor.h>
 #include <PWM.h>
-#include <PWMinput.h>
+#include <PWMInput.h>
 #include <GyroSimpleFilter.h>
 #include <SimplePID.h>
 #include <Timer.h>
@@ -170,18 +170,12 @@ int main(void)
   imu.init();
 
   // PWM pwm(TIM1, 200, 5000, 4);
-  PWMinput pwm_in[] =
-  {
-    PWMinput(TIM3, 1000 * 1000),
-    PWMinput(TIM4, 1000 * 1000),
-    PWMinput(TIM5, 1000 * 1000),
-    PWMinput(TIM11, 1000 * 1000)
-  };
+  PWMInput pwm_in(TIM3, 1'000'000, 4);
 
   // while (!imu.ready_to_read())
   //   ;
 
-  constexpr float gyro_sensitivity = ((250.f * M_PI)/(180.f * ((1 << 15) - 1)));
+  constexpr auto gyro_sensitivity = static_cast<float>((250.f * M_PI)/(180.f * ((1 << 15) - 1)));
 
   GyroSimpleFilter gyro_filter(gyro_sensitivity);
 
@@ -194,28 +188,25 @@ int main(void)
   MODIFY_REG(GPIOA->AFR[1], GPIO_AFRH_AFSEL9, 0b0001 << GPIO_AFRH_AFSEL9_Pos);
 
   // set pins for PWM input
-  // PC6, PB6, PA0, PB9
-  // TIM3, TIM4, TIM5, TIM6
+  // PC6, PC7, PC8, PC9
+  // TIM3
   MODIFY_REG(GPIOC->MODER, GPIO_MODER_MODE6, 0b10 << GPIO_MODER_MODE6_Pos);
   MODIFY_REG(GPIOC->AFR[0], GPIO_AFRL_AFSEL6, 0b0010 << GPIO_AFRL_AFSEL6_Pos);
 
-  MODIFY_REG(GPIOB->MODER, GPIO_MODER_MODE6, 0b10 << GPIO_MODER_MODE6_Pos);
-  MODIFY_REG(GPIOB->AFR[0], GPIO_AFRL_AFSEL6, 0b0010 << GPIO_AFRL_AFSEL6_Pos);
+  MODIFY_REG(GPIOC->MODER, GPIO_MODER_MODE7, 0b10 << GPIO_MODER_MODE7_Pos);
+  MODIFY_REG(GPIOC->AFR[0], GPIO_AFRL_AFSEL7, 0b0010 << GPIO_AFRL_AFSEL7_Pos);
 
-  MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE0, 0b10 << GPIO_MODER_MODE0_Pos);
-  MODIFY_REG(GPIOA->AFR[0], GPIO_AFRL_AFSEL0, 0b0010 << GPIO_AFRL_AFSEL0_Pos);
+  MODIFY_REG(GPIOC->MODER, GPIO_MODER_MODE8, 0b10 << GPIO_MODER_MODE8_Pos);
+  MODIFY_REG(GPIOC->AFR[1], GPIO_AFRH_AFSEL8, 0b0010 << GPIO_AFRH_AFSEL8_Pos);
 
-  MODIFY_REG(GPIOB->MODER, GPIO_MODER_MODE9, 0b10 << GPIO_MODER_MODE9_Pos);
-  MODIFY_REG(GPIOB->AFR[1], GPIO_AFRH_AFSEL9, 0b0011 << GPIO_AFRH_AFSEL9_Pos);
+  MODIFY_REG(GPIOC->MODER, GPIO_MODER_MODE9, 0b10 << GPIO_MODER_MODE9_Pos);
+  MODIFY_REG(GPIOC->AFR[1], GPIO_AFRH_AFSEL9, 0b0010 << GPIO_AFRH_AFSEL9_Pos);
 
   // pwm.init();
   // pwm.start();
 
-  for (size_t i = 0; i < arr_size(pwm_in); ++i)
-  {
-    pwm_in[i].init();
-    pwm_in[i].start();
-  }
+  pwm_in.init();
+  pwm_in.start();
 
   // Motor m1(&pwm, 1, {{-1, -1, 0}});
   // Motor m3(&pwm, 2, {{1, 1, 0}});
@@ -247,6 +238,8 @@ int main(void)
 
   imu.read_all();
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wmissing-noreturn"
   for(;;)
   {
     loop_timer.restart();
@@ -262,14 +255,14 @@ int main(void)
     // m1.set(controls);
     // m3.set(controls);
 
-    int c1, c2, c3, c4;
-    c1 = pwm_in[0].get();
-    c2 = pwm_in[1].get();
-    c3 = pwm_in[2].get();
-    c4 = pwm_in[3].get();
+    int32_t c1 = 0, c2 = 0, c3 = 0, c4 = 0;
+    c1 = pwm_in.get(1);
+    c2 = pwm_in.get(2);
+    c3 = pwm_in.get(3);
+    c4 = pwm_in.get(4);
 
     char str[128];
-    sprintf(str, "%d %d %d %d\n", c1, c2, c3, c4);
+    sprintf(str, "%ld %ld %ld %ld\n", c1, c2, c3, c4);
     uart_usb.send(str);
 
     // if (READ_BIT(GPIOC->IDR, GPIO_IDR_ID13) == 0)
@@ -330,4 +323,5 @@ int main(void)
     // sprintf(str, "123\n");
 //    if (!uart_usb.is_sending())
   }
+#pragma clang diagnostic pop
 }

@@ -34,12 +34,12 @@ Timer::Timer(uint32_t timeout):
   _end = now() + _timeout;
 }
 
-void Timer::restart()
+void Timer::restart() volatile
 {
   _end = now() + _timeout;
 }
 
-Timer::operator bool() const
+Timer::operator bool() const volatile
 {
   return now() < _end;
 }
