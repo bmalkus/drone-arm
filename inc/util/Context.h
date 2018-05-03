@@ -1,10 +1,10 @@
 #ifndef CONTEXT_H
 #define CONTEXT_H
 
-#include <USART.h>
-#include <Motor.h>
-#include <IMU.h>
-#include <SimplePID.h>
+#include <protocol/USART.h>
+#include <IOwrapper/Motor.h>
+#include <IOwrapper/IMU.h>
+#include <PID/RatePID.h>
 
 struct Context
 {
@@ -14,7 +14,7 @@ struct Context
   Readings *readings;
   AngularRates *angular_rates;
   Controls *controls;
-  SimplePID *pid;
+  RatePID *pid;
 };
 
 #endif /* CONTEXT_H */

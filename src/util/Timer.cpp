@@ -1,7 +1,7 @@
-#include <Timer.h>
+#include <util/Timer.h>
 
-#include <USART.h>
-#include <utils.h>
+#include <protocol/USART.h>
+#include <util/misc.h>
 
 #include <cstdint>
 

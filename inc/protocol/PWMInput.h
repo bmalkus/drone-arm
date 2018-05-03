@@ -3,9 +3,9 @@
 
 #include <stm32f4xx.h>
 
-#include <HandlerHelper.h>
-#include <utils.h>
-#include <Timer.h>
+#include <util/HandlerHelper.h>
+#include <util/misc.h>
+#include <util/Timer.h>
 
 class PWMInput
 {

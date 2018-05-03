@@ -1,7 +1,7 @@
-#include <HandlerHelper.h>
+#include <util/HandlerHelper.h>
 
 #include <stm32f4xx.h>
-#include <USART.h>
+#include <protocol/USART.h>
 
 void HandlerHelper::call_handler(InterruptType interrupt)
 {

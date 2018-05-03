@@ -1,23 +1,23 @@
-#include <SimplePID.h>
+#include <PID/RatePID.h>
 
 #include <cmath>
 
 constexpr float MAX_ANG_RATE = ((250.f * M_PI) / 180.f);
 constexpr float SCALE_MULTIPLIER = (1.f / MAX_ANG_RATE) * (1.f / 3.f);
 
-SimplePID::SimplePID():
+RatePID::RatePID():
   _coeffs{{1.f, 1.f, 1.f}}
 {
   for (uint8_t i = 0; i < 3; ++i)
     _coeffs.data[i] *= SCALE_MULTIPLIER;
 }
 
-void SimplePID::set_coeff(PART part, float coeff)
+void RatePID::set_coeff(PART part, float coeff)
 {
   _coeffs.data[part] = coeff * SCALE_MULTIPLIER;
 }
 
-Controls SimplePID::process(AngularRates rates, Sticks inputs)
+Controls RatePID::process(AngularRates rates, Sticks inputs)
 {
   _curr_errors = 1 - _curr_errors;
 

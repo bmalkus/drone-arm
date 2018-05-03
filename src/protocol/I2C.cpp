@@ -1,7 +1,7 @@
-#include <I2C.h>
+#include <protocol/I2C.h>
 
-#include <utils.h>
-#include <USART.h>
+#include <util/misc.h>
+#include <protocol/USART.h>
 
 extern USART uart_usb;
 

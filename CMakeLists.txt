@@ -33,22 +33,22 @@ set(SOURCE_FILES
         CMSIS/device/stm32f446xx.h
         CMSIS/device/stm32f4xx.h
         CMSIS/device/system_stm32f4xx.h
-        src/GyroAngleFilter.cpp
-        src/GyroSimpleFilter.cpp
-        src/HandlerHelper.cpp
-        src/I2C.cpp
-        src/IMU.cpp
+        src/filter/GyroAngleFilter.cpp
+        src/filter/GyroRateFilter.cpp
+        src/util/HandlerHelper.cpp
+        src/protocol/I2C.cpp
+        src/IOwrapper/IMU.cpp
         src/main.cpp
-        src/Motor.cpp
-        src/PWM.cpp
-        src/PWMInput.cpp
-        src/SimplePID.cpp
+        src/IOwrapper/Motor.cpp
+        src/protocol/PWM.cpp
+        src/protocol/PWMInput.cpp
+        src/PID/RatePID.cpp
         src/syscalls.c
         src/system_stm32f4xx.c
-        src/Timer.cpp
-        src/USART.cpp
-        src/USARTHelper.cpp
-        src/utils.cpp
-        startup/startup_stm32f446xx.s inc/Sticks.cpp inc/Sticks.h)
+        src/util/Timer.cpp
+        src/protocol/USART.cpp
+        src/util/USARTHelper.cpp
+        src/util/misc.cpp
+        startup/startup_stm32f446xx.s src/IOwrapper/Sticks.cpp inc/IOwrapper/Sticks.h inc/PID/common.h)
 
 add_executable(HelloWorld ${SOURCE_FILES})

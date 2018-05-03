@@ -1,7 +1,7 @@
 #ifndef GYROANGLEFILTER_H
 #define GYROANGLEFILTER_H
 
-#include <IMU.h>
+#include <IOwrapper/IMU.h>
 
 class GyroAngleFilter
 {

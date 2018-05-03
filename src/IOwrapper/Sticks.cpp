@@ -1,4 +1,4 @@
-#include "Sticks.h"
+#include "IOwrapper/Sticks.h"
 
 Sticks::Sticks():
   data{0.f, 0.f, 0.f, 0.f}

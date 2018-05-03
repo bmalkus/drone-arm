@@ -4,19 +4,19 @@
 
 #include <stm32f4xx.h>
 
-#include <Context.h>
-#include <I2C.h>
-#include <IMU.h>
-#include <Motor.h>
-#include <PWM.h>
-#include <PWMInput.h>
-#include <GyroSimpleFilter.h>
-#include <SimplePID.h>
-#include <Timer.h>
-#include <USART.h>
-#include <USARTHelper.h>
-#include <utils.h>
-#include <Sticks.h>
+#include <util/Context.h>
+#include <protocol/I2C.h>
+#include <IOwrapper/IMU.h>
+#include <IOwrapper/Motor.h>
+#include <protocol/PWM.h>
+#include <protocol/PWMInput.h>
+#include <filter/GyroRateFilter.h>
+#include <PID/RatePID.h>
+#include <util/Timer.h>
+#include <protocol/USART.h>
+#include <util/USARTHelper.h>
+#include <util/misc.h>
+#include <IOwrapper/Sticks.h>
 
 Context context;
 USART uart_usb(USART2, 115200);
@@ -199,7 +199,7 @@ int main(void)
 
   constexpr auto gyro_sensitivity = static_cast<float>((250.f * M_PI)/(180.f * ((1 << 15) - 1)));
 
-  GyroSimpleFilter gyro_filter(gyro_sensitivity);
+  GyroRateFilter gyro_filter(gyro_sensitivity);
 
   // set pins for PWM
   // PA8, PA9
@@ -247,7 +247,7 @@ int main(void)
 
   // uint8_t speed = 0;
 
-  SimplePID pid;
+  RatePID pid;
 
   Readings gyro;
   AngularRates rates;

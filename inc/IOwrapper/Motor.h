@@ -3,9 +3,9 @@
 
 #include <stm32f4xx.h>
 
-#include <PWM.h>
-#include <Timer.h>
-#include <utils.h>
+#include <protocol/PWM.h>
+#include <util/Timer.h>
+#include <util/misc.h>
 
 union Multipliers
 {

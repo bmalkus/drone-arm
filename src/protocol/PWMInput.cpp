@@ -1,7 +1,7 @@
 #include <cstdint>
 
-#include <PWMInput.h>
-#include <HandlerHelper.h>
+#include <protocol/PWMInput.h>
+#include <util/HandlerHelper.h>
 #include <stm32f446xx.h>
 
 PWMInput::PWMInput(TIM_TypeDef *TIM, uint32_t counter_freq, uint8_t channels):

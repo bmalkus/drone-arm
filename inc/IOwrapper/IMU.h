@@ -1,7 +1,7 @@
 #ifndef IMU_H
 #define IMU_H
 
-#include <I2C.h>
+#include <protocol/I2C.h>
 
 /**
  * @brief Union used to store readings from sensors

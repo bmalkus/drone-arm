@@ -1,12 +1,12 @@
 #ifndef GYROSIMPLEFILTER_H
 #define GYROSIMPLEFILTER_H
 
-#include <IMU.h>
+#include <IOwrapper/IMU.h>
 
-class GyroSimpleFilter
+class GyroRateFilter
 {
 public:
-  GyroSimpleFilter(float gyro_sensitivity);
+  GyroRateFilter(float gyro_sensitivity);
 
   AngularRates process(const Readings &gyro);
 

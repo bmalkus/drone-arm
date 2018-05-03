@@ -1,5 +1,5 @@
-#include <IMU.h>
-#include <utils.h>
+#include <IOwrapper/IMU.h>
+#include <util/misc.h>
 
 IMU::IMU(I2C *i2c):
   _i2c(i2c)

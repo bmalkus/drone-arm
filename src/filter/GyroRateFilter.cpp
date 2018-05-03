@@ -1,16 +1,16 @@
-#include <GyroSimpleFilter.h>
-#include <utils.h>
+#include <filter/GyroRateFilter.h>
+#include <util/misc.h>
 
 #include <cmath>
 
-GyroSimpleFilter::GyroSimpleFilter(float gyro_sensitivity):
+GyroRateFilter::GyroRateFilter(float gyro_sensitivity):
   _gyro_sensitivity(gyro_sensitivity),
   _prev({{0.f, 0.f, 0.f}})
 {
   // empty
 }
 
-AngularRates GyroSimpleFilter::process(const Readings &gyro)
+AngularRates GyroRateFilter::process(const Readings &gyro)
 {
   float curr[3] = {gyro.x * _gyro_sensitivity, gyro.y * _gyro_sensitivity, gyro.z * _gyro_sensitivity};
   AngularRates ret{{

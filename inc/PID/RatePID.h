@@ -1,24 +1,17 @@
 #ifndef SIMPLEPID_H
 #define SIMPLEPID_H
 
-#include <GyroSimpleFilter.h>
-#include <Motor.h>
-#include <utils.h>
-#include "Sticks.h"
+#include <filter/GyroRateFilter.h>
+#include <IOwrapper/Motor.h>
+#include <util/misc.h>
+#include <IOwrapper/IMU.h>
+#include "IOwrapper/Sticks.h"
+#include "PID/common.h"
 
-union Coefficients
-{
-  struct
-  {
-    float P, I, D;
-  };
-  float data[3];
-};
-
-class SimplePID
+class RatePID
 {
 public:
-  SimplePID();
+  RatePID();
 
   enum PART
   {

@@ -5,8 +5,8 @@
 
 #include <stm32f4xx.h>
 
-#include <HandlerHelper.h>
-#include <utils.h>
+#include <util/HandlerHelper.h>
+#include <util/misc.h>
 
 /**
  * @brief Class responsible for managing I2C interface

@@ -1,5 +1,5 @@
-#include <PWM.h>
-#include <utils.h>
+#include <protocol/PWM.h>
+#include <util/misc.h>
 
 PWM::PWM(TIM_TypeDef *TIM, uint16_t pwm_freq, uint16_t resolution, uint8_t channels):
   _TIM(TIM),
