@@ -1,5 +1,6 @@
 #include <protocol/PWM.h>
 #include <util/misc.h>
+#include <util/TIMUtils.h>
 
 PWM::PWM(TIM_TypeDef *TIM, uint16_t pwm_freq, uint16_t resolution, uint8_t channels):
   _TIM(TIM),
@@ -22,13 +23,7 @@ void PWM::init()
   SET_BIT(_TIM->CCMR2, TIM_CCMR2_OC3PE);
   SET_BIT(_TIM->CCMR2, TIM_CCMR2_OC4PE);
 
-  // if APBx prescaler > 1, timer freq is 2 * PCLKx, so prescaler must be divided by 2
-  int8_t APB_presc_shift;
-
-  // TODO: adjust to usage of timers clocked by APB1
-  APB_presc_shift = APBPrescTable[READ_VAL(RCC->CFGR, RCC_CFGR_PPRE2)];
-  uint32_t clk = SystemCoreClock >> max(APB_presc_shift - 1, 0);
-  _TIM->PSC = (clk / (_pwm_freq * _resolution)) - 1;
+  _TIM->PSC = TIMUtils::presc_for(_TIM, _pwm_freq * _resolution);
   _TIM->ARR = _resolution - 1;
 
   // set output compare mode to PWM mode 1 for each channel and enable compare

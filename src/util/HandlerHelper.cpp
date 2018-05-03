@@ -58,6 +58,11 @@ extern "C" void TIM1_TRG_COM_TIM11_IRQHandler()
   HandlerHelper::call_handler(HandlerHelper::TIM1_TRG_COM_TIM11_INT);
 }
 
+extern "C" void TIM2_IRQHandler()
+{
+  HandlerHelper::call_handler(HandlerHelper::TIM2_INT);
+}
+
 extern "C" void TIM3_IRQHandler()
 {
   HandlerHelper::call_handler(HandlerHelper::TIM3_INT);

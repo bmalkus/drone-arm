@@ -1,12 +1,4 @@
 #include <util/misc.h>
-// #include <USART.h>
-
-// extern USART uart_usb;
-
-// int __io_putchar(int c)
-// {
-//   uart_usb.send((uint8_t)c, true);
-// }
 
 void Delay(int ms)
 {

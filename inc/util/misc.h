@@ -32,6 +32,4 @@ T clamp(T val, T lo, T hi)
 template<class T, size_t N>
 constexpr size_t arr_size(T (&)[N]) { return N; }
 
-// int __io_putchar(int c);
-
 #endif /* UTILS_H */

@@ -29,8 +29,6 @@ private:
 
   void handle_event(HandlerHelper::InterruptType);
 
-  static uint16_t APB_presc_shift_for(TIM_TypeDef *TIM);
-
   static constexpr uint32_t TIM_CNTR_MAX = 10'000;
   static constexpr uint32_t ALIVE_TIMEOUT = 100;
 

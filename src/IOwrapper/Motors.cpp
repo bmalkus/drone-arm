@@ -1,9 +1,9 @@
-#include <IOwrapper/Motor.h>
+#include <IOwrapper/Motors.h>
 
 constexpr float THROTTLE_MULTIPLIER = 0.8f;
 constexpr float THROTTLE_OFFSET = (1.f - THROTTLE_MULTIPLIER) / 2.f;
 
-Motor::Motor(PWM *pwm, uint8_t channel, Multipliers multipliers):
+Motors::Motors(PWM *pwm, uint8_t channel, Multipliers multipliers):
   _pwm(pwm),
   _pwm_channel(channel),
   _multipliers(multipliers),
@@ -11,43 +11,41 @@ Motor::Motor(PWM *pwm, uint8_t channel, Multipliers multipliers):
   _init_called(false),
   _init_timer(Timer(0))
 {
-  // for (uint8_t i = 0; i < 3; ++i)
-  //   _multipliers.data[i] *= PID_MULTIPLIER;
   _pwm_1_ms = _pwm->get_resolution() / 5;
   _pwm_multiplier = ((9.f / 10.f) * _pwm_1_ms);
   _pwm_low_offset = _pwm_1_ms + (_pwm_1_ms * 0.1f);
 }
 
-void Motor::init()
+void Motors::init()
 {
   _pwm->set(_pwm_channel, _pwm_1_ms);
   _init_timer = Timer(1000);
   _init_called = true;
 }
 
-bool Motor::ready()
+bool Motors::ready()
 {
   return _init_called && !_init_timer;
 }
 
-bool Motor::armed()
+bool Motors::armed()
 {
   return _armed;
 }
 
-void Motor::arm()
+void Motors::arm()
 {
   _armed = true;
   _pwm->set(_pwm_channel, _pwm_low_offset);
 }
 
-void Motor::disarm()
+void Motors::disarm()
 {
   _armed = false;
   _pwm->set(_pwm_channel, _pwm_1_ms);
 }
 
-void Motor::set(Controls controls)
+void Motors::set(Controls controls)
 {
   if (!_armed)
   {
@@ -62,7 +60,7 @@ void Motor::set(Controls controls)
   _pwm->set(_pwm_channel, _pwm_low_offset + static_cast<uint16_t>(_pwm_multiplier * output));
 }
 
-float Motor::current()
+float Motors::current()
 {
   return _current;
 }

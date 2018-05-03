@@ -1,16 +1,18 @@
 #ifndef USARTHELPER_H
 #define USARTHELPER_H
 
-#include <util/Context.h>
+#include <protocol/USART.h>
 
 class USARTHelper
 {
 public:
-  USARTHelper(USART *usart_to_use, Context *context);
+  explicit USARTHelper(USART *usart_to_use);
+
+  void send(char c);
+  void send(const char *str);
 
 private:
   USART *_usart;
-  Context *_context;
 
   char _buffer[64];
   static const char *delimit_tokens;
@@ -31,5 +33,7 @@ private:
 
 void __usart_rx_callback(void *usart_helper, uint8_t byte);
 void __usart_rx_bt_callback(void *usart_helper, uint8_t byte);
+
+extern "C" int __io_putchar(int c);
 
 #endif /* USARTHELPER_H */

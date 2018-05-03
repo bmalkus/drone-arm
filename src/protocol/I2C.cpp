@@ -3,8 +3,6 @@
 #include <util/misc.h>
 #include <protocol/USART.h>
 
-extern USART uart_usb;
-
 I2C::I2C(I2C_TypeDef *I2C):
   _I2C(I2C)
 {

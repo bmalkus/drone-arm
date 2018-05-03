@@ -30,13 +30,10 @@ union Controls
   float data[4];
 };
 
-/**
- * @brief Class responsible for controlling single motor
- */
-class Motor
+class Motors
 {
 public:
-  Motor(PWM *pwm, uint8_t channel, Multipliers multipliers);
+  Motors(PWM *pwm, uint8_t channel, Multipliers multipliers);
 
   void init();
 

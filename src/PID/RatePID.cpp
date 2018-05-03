@@ -8,8 +8,8 @@ constexpr float SCALE_MULTIPLIER = (1.f / MAX_ANG_RATE) * (1.f / 3.f);
 RatePID::RatePID():
   _coeffs{{1.f, 1.f, 1.f}}
 {
-  for (uint8_t i = 0; i < 3; ++i)
-    _coeffs.data[i] *= SCALE_MULTIPLIER;
+  for (float &c : _coeffs.data)
+    c *= SCALE_MULTIPLIER;
 }
 
 void RatePID::set_coeff(PART part, float coeff)

@@ -3,6 +3,7 @@
 #include <protocol/PWMInput.h>
 #include <util/HandlerHelper.h>
 #include <stm32f446xx.h>
+#include <util/TIMUtils.h>
 
 PWMInput::PWMInput(TIM_TypeDef *TIM, uint32_t counter_freq, uint8_t channels):
   _TIM(TIM),
@@ -45,9 +46,7 @@ void PWMInput::init()
 
   SET_BIT(_TIM->DIER, TIM_DIER_UIE);
 
-  // if APBx prescaler > 1, timer freq is 2 * PCLKx, so prescaler must be divided by 2
-  uint32_t clk = SystemCoreClock >> max(APB_presc_shift_for(_TIM) - 1, 0);
-  _TIM->PSC = (clk / _counter_freq) - 1;
+  _TIM->PSC = TIMUtils::presc_for(_TIM, _counter_freq);
   _TIM->ARR = TIM_CNTR_MAX;
 
   HandlerHelper::set_handler(HandlerHelper::interrupt_for(_TIM), __pwm_input_tim_event, this);
@@ -149,14 +148,6 @@ void PWMInput::handle_event(HandlerHelper::InterruptType /*itype*/)
     }
     CLEAR_BIT(_TIM->SR, TIM_SR_UIF);
   }
-}
-
-uint16_t PWMInput::APB_presc_shift_for(TIM_TypeDef *TIM)
-{
-  // TODO: not all timers listed
-  if (TIM == TIM1 || TIM == TIM8 || TIM == TIM9 || TIM == TIM10 || TIM == TIM11)
-    return APBPrescTable[READ_VAL(RCC->CFGR, RCC_CFGR_PPRE2)];
-  return APBPrescTable[READ_VAL(RCC->CFGR, RCC_CFGR_PPRE1)];
 }
 
 void __pwm_input_tim_event(HandlerHelper::InterruptType itype, void *_pwm)

@@ -4,42 +4,68 @@
 #include <util/misc.h>
 
 #include <cstdint>
+#include <util/TIMUtils.h>
+#include <stm32f446xx.h>
 
 TIM_TypeDef *Timer::_TIM;
+volatile uint32_t Timer::_millis;
 
-uint32_t Timer::now()
+Timer::Timer(uint32_t timeout):
+    _timeout(timeout)
 {
-  return _TIM->CNT >> 1;
+  _end = millis() + _timeout;
+}
+
+uint32_t Timer::millis()
+{
+  __disable_irq();
+  uint32_t ret = _millis + (_TIM->CNT / 1'000);
+  __enable_irq();
+  return ret;
+}
+
+uint32_t Timer::micros()
+{
+  return _TIM->CNT % 1'000;
 }
 
 void Timer::init()
 {
   _TIM = TIM2;
 
-  int8_t APB_presc_shift = APBPrescTable[READ_VAL(RCC->CFGR, RCC_CFGR_PPRE1)];
-  uint32_t clk = SystemCoreClock >> max(APB_presc_shift - 1, 0);
-  _TIM->PSC = (clk / (2 * 1000)) - 1;
-  _TIM->ARR = UINT32_MAX;
+  _TIM->PSC = TIMUtils::presc_for(_TIM, 1'000'000);
+  _TIM->ARR = 16'000'000;
 
-  _TIM->CCR1 = UINT32_MAX;
+  HandlerHelper::set_handler(HandlerHelper::interrupt_for(_TIM), __timer_tim_event_handler, nullptr);
 
+  // enable interrupt
+  SET_BIT(_TIM->DIER, TIM_DIER_UIE);
+
+  // trigger update event, but do not trigger interrupt when setting UG
+  SET_BIT(_TIM->CR1, TIM_CR1_URS);
   SET_BIT(_TIM->EGR, TIM_EGR_UG);
 
+  // enable counter
   SET_BIT(_TIM->CR1, TIM_CR1_CEN);
-}
-
-Timer::Timer(uint32_t timeout):
-  _timeout(timeout)
-{
-  _end = now() + _timeout;
 }
 
 void Timer::restart() volatile
 {
-  _end = now() + _timeout;
+  _end = millis() + _timeout;
 }
 
 Timer::operator bool() const volatile
 {
-  return now() < _end;
+  return millis() < _end;
+}
+
+void Timer::tim_event_handler()
+{
+  _millis += 16'000'000;
+  CLEAR_BIT(_TIM->SR, TIM_SR_UIF);
+}
+
+void __timer_tim_event_handler(HandlerHelper::InterruptType /*itype*/, void */*unused*/)
+{
+  Timer::tim_event_handler();
 }

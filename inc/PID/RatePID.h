@@ -2,7 +2,7 @@
 #define SIMPLEPID_H
 
 #include <filter/GyroRateFilter.h>
-#include <IOwrapper/Motor.h>
+#include <IOwrapper/Motors.h>
 #include <util/misc.h>
 #include <IOwrapper/IMU.h>
 #include "IOwrapper/Sticks.h"

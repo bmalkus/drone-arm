@@ -7,7 +7,7 @@
 #include <util/Context.h>
 #include <protocol/I2C.h>
 #include <IOwrapper/IMU.h>
-#include <IOwrapper/Motor.h>
+#include <IOwrapper/Motors.h>
 #include <protocol/PWM.h>
 #include <protocol/PWMInput.h>
 #include <filter/GyroRateFilter.h>
@@ -17,11 +17,6 @@
 #include <util/USARTHelper.h>
 #include <util/misc.h>
 #include <IOwrapper/Sticks.h>
-
-Context context;
-USART uart_usb(USART2, 115200);
-USART uart_bt(USART3, 115200);
-I2C mpu(I2C1);
 
 extern "C" void SysTick_Handler()
 {
@@ -159,6 +154,7 @@ int main(void)
   NVIC_EnableIRQ(USART3_IRQn);
   NVIC_EnableIRQ(I2C1_EV_IRQn);
   NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn);
+  NVIC_EnableIRQ(TIM2_IRQn);
   NVIC_EnableIRQ(TIM3_IRQn);
   NVIC_EnableIRQ(TIM4_IRQn);
   NVIC_EnableIRQ(TIM5_IRQn);
@@ -177,29 +173,6 @@ int main(void)
   MODIFY_REG(GPIOB->PUPDR, GPIO_PUPDR_PUPD9, 0b01 << GPIO_PUPDR_PUPD9_Pos);
   MODIFY_REG(GPIOB->OSPEEDR, GPIO_OSPEEDR_OSPEED9, 0b11 << GPIO_OSPEEDR_OSPEED9_Pos);
   MODIFY_REG(GPIOB->AFR[1], GPIO_AFRH_AFSEL9, 0b0100 << GPIO_AFRH_AFSEL9_Pos);
-
-  Timer::init();
-
-  IMU imu(&mpu);
-
-  uart_usb.init();
-  context.uart_usb = &uart_usb;
-  uart_bt.init();
-  context.uart_bt = &uart_bt;
-
-  USARTHelper helper(&uart_usb, &context);
-
-  imu.init();
-
-  // PWM pwm(TIM1, 200, 5000, 4);
-  PWMInput main_inputs(TIM3, 1'000'000, 4);
-
-  // while (!imu.ready_to_read())
-  //   ;
-
-  constexpr auto gyro_sensitivity = static_cast<float>((250.f * M_PI)/(180.f * ((1 << 15) - 1)));
-
-  GyroRateFilter gyro_filter(gyro_sensitivity);
 
   // set pins for PWM
   // PA8, PA9
@@ -224,14 +197,38 @@ int main(void)
   MODIFY_REG(GPIOC->MODER, GPIO_MODER_MODE9, 0b10 << GPIO_MODER_MODE9_Pos);
   MODIFY_REG(GPIOC->AFR[1], GPIO_AFRH_AFSEL9, 0b0010 << GPIO_AFRH_AFSEL9_Pos);
 
+  Timer::init();
+
+  USART uart_usb(USART2, 115200);
+  // USART uart_bt(USART3, 115200);
+  uart_usb.init();
+  // uart_bt.init();
+
+  USARTHelper helper(&uart_usb);
+
+  I2C mpu(I2C1);
+  IMU imu(&mpu);
+  imu.init();
+
+  PWM pwm(TIM1, 200, 5000, 4);
+
+  PWMInput main_inputs(TIM3, 1'000'000, 4);
+
+  // while (!imu.ready_to_read())
+  //   ;
+
+  constexpr auto gyro_sensitivity = static_cast<float>((250.f * M_PI)/(180.f * ((1 << 15) - 1)));
+
+  GyroRateFilter gyro_filter(gyro_sensitivity);
+
   // pwm.init();
   // pwm.start();
 
   main_inputs.init();
   main_inputs.start();
 
-  // Motor m1(&pwm, 1, {{-1, -1, 0}});
-  // Motor m3(&pwm, 2, {{1, 1, 0}});
+  // Motors m1(&pwm, 1, {{-1, -1, 0}});
+  // Motors m3(&pwm, 2, {{1, 1, 0}});
 
   // m1.init();
   // m3.init();
@@ -243,8 +240,6 @@ int main(void)
 
   // bool clicked = false;
 
-  Timer loop_timer(10);
-
   // uint8_t speed = 0;
 
   RatePID pid;
@@ -253,24 +248,29 @@ int main(void)
   AngularRates rates;
   Controls controls;
 
-  context.readings = &gyro;
-  context.angular_rates = &rates;
-  context.controls = &controls;
-  context.pid = &pid;
-
   Sticks inputs;
 
 #pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wreturn-stack-address"
+  Context::uart_usb = &uart_usb;
+  // Context::uart_bt = &uart_bt;
+  Context::usart_helper = &helper;
+  Context::readings = &gyro;
+  Context::angular_rates = &rates;
+  Context::controls = &controls;
+  Context::pid = &pid;
+#pragma clang diagnostic pop
+
+#pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
+
+  Timer loop_timer(1000);
+
   for(;;)
   {
     loop_timer.restart();
 
     // imu.read_all();
-
-    // helper.next_iter();
-
-    // gyro = imu.gyro();
 
     // rates = gyro_filter.process(gyro);
 
@@ -313,8 +313,11 @@ int main(void)
     // while (imu.is_busy())
     //   ;
 
-    char str[128];
-    // sprintf(str, "%.02f %.02f %.02f %.02f\n", inputs.yaw, inputs.pitch, inputs.roll, inputs.throttle);
+    // printf("%.02f %.02f %.02f %.02f\n", inputs.yaw, inputs.pitch, inputs.roll, inputs.throttle);
+    int32_t start = Timer::micros();
+    uart_usb.send("12345678901234567890\n");
+    int32_t time = Timer::micros() - start;
+    // printf("%lu\n", time);
     // uart_usb.send(str);
 
     // if (READ_BIT(GPIOC->IDR, GPIO_IDR_ID13) == 0)
@@ -360,8 +363,6 @@ int main(void)
 
     while(loop_timer)
       ;
-
-
 
     // Readings acc = imu.acc();
 

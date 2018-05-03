@@ -174,24 +174,24 @@ void IMU::_call_and_clear_callback()
 
 void __reg_addr_sent_handler(void *_imu)
 {
-  IMU *imu = (IMU*)_imu;
+  auto *imu = (IMU*)_imu;
   imu->_reg_addr_sent_handler();
 }
 
 void __reading_done_handler(void *_imu)
 {
-  IMU *imu = (IMU*)_imu;
+  auto *imu = (IMU*)_imu;
   imu->_reading_done_handler();
 }
 
 void __init_data_sent_handler(void *_imu)
 {
-  IMU *imu = (IMU*)_imu;
+  auto *imu = (IMU*)_imu;
   imu->_init_data_sent_handler();
 }
 
 void __sending_handler(void *_imu)
 {
-  IMU *imu = (IMU*)_imu;
+  auto *imu = (IMU*)_imu;
   imu->_sending_handler();
 }

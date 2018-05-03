@@ -12,6 +12,7 @@ extern "C" void USART6_IRQHandler();
 extern "C" void I2C1_EV_IRQHandler();
 extern "C" void TIM1_BRK_TIM9_IRQHandler();
 extern "C" void TIM1_TRG_COM_TIM11_IRQHandler();
+extern "C" void TIM2_IRQHandler();
 extern "C" void TIM3_IRQHandler();
 extern "C" void TIM4_IRQHandler();
 extern "C" void TIM5_IRQHandler();
@@ -38,6 +39,7 @@ public:
     I2C1_EV_INT,
     TIM1_BRK_TIM9_INT,
     TIM1_TRG_COM_TIM11_INT,
+    TIM2_INT,
     TIM3_INT,
     TIM4_INT,
     TIM5_INT,
@@ -74,6 +76,7 @@ public:
   friend void I2C1_EV_IRQHandler();
   friend void TIM1_BRK_TIM9_IRQHandler();
   friend void TIM1_TRG_COM_TIM11_IRQHandler();
+  friend void TIM2_IRQHandler();
   friend void TIM3_IRQHandler();
   friend void TIM4_IRQHandler();
   friend void TIM5_IRQHandler();
@@ -83,7 +86,9 @@ public:
 
 constexpr HandlerHelper::InterruptType HandlerHelper::interrupt_for(void *struct_ptr)
 {
-  if (struct_ptr == TIM3)
+  if (struct_ptr == TIM2)
+    return InterruptType::TIM2_INT;
+  else if (struct_ptr == TIM3)
     return InterruptType::TIM3_INT;
   else if (struct_ptr == TIM4)
     return InterruptType::TIM4_INT;

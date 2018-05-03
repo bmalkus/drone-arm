@@ -48,13 +48,6 @@ public:
   void send(uint8_t to_send);
 
   /**
-   * @brief Indicates if interface is busy sending data
-   *
-   * @return true if sending, false otherwise
-   */
-  bool is_sending();
-
-  /**
    * @brief Sets callback to be called when data arrives
    */
   void set_rx_callback(rx_cb_type cb, void *user_data=nullptr);
@@ -73,10 +66,9 @@ private:
   volatile char _out_buffer[256];
   volatile uint32_t _queue_at = 0;
   volatile uint32_t _send_from = 0;
-  volatile bool _sending = false;
 
-  cb_type _done_cb = nullptr;
-  void *_done_cb_user_data = nullptr;
+  volatile cb_type _done_cb = nullptr;
+  void * volatile _done_cb_user_data = nullptr;
 
   rx_cb_type _rx_cb = nullptr;
   void *_rx_cb_user_data = nullptr;

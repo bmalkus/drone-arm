@@ -1,6 +1,7 @@
 #include <protocol/USART.h>
 
 #include <cstring>
+#include <stm32f446xx.h>
 
 USART::USART(USART_TypeDef *USART, uint32_t baud_rate):
   _USART(USART),
@@ -47,10 +48,11 @@ void USART::init()
 
 void USART::send(uint8_t to_send)
 {
-  _out_buffer[_queue_at] = to_send;
-  _queue_at = (_queue_at + 1) % 256;
-  if (!_sending)
-    SET_BIT(_USART->CR1, USART_CR1_TXEIE);
+  __disable_irq();
+  _out_buffer[_queue_at++] = to_send;
+  _queue_at %= 256;
+  SET_BIT(_USART->CR1, USART_CR1_TXEIE);
+  __enable_irq();
 }
 
 void USART::send(const char *to_send, cb_type cb, void *user_data)
@@ -59,16 +61,12 @@ void USART::send(const char *to_send, cb_type cb, void *user_data)
   _done_cb_user_data = user_data;
   while (*to_send)
   {
-    _out_buffer[_queue_at] = *to_send++;
-    _queue_at = (_queue_at + 1) % 256;
-    if (!_sending)
-      SET_BIT(_USART->CR1, USART_CR1_TXEIE);
+    __disable_irq();
+    _out_buffer[_queue_at++] = *to_send++;
+    _queue_at %= 256;
+    SET_BIT(_USART->CR1, USART_CR1_TXEIE);
+    __enable_irq();
   }
-}
-
-bool USART::is_sending()
-{
-  return _sending;
 }
 
 void USART::set_rx_callback(rx_cb_type cb, void *user_data)
@@ -97,13 +95,12 @@ void USART::handle_event(HandlerHelper::InterruptType /*itype*/)
   }
   else
   {
-    _sending = true;
     // sent bit
-    if ((_queue_at % 256) != (_send_from % 256))
+    if (_queue_at != _send_from)
     {
-      _USART->DR = _out_buffer[_send_from];
-      _send_from = (_send_from + 1) % 256;
-      return;
+      _USART->DR = _out_buffer[_send_from++];
+      _send_from %= 256;
+      _USART->DR; // dummy read - without it, handle_event() may improperly fire second time right after first one
     }
     else
     {
@@ -112,7 +109,6 @@ void USART::handle_event(HandlerHelper::InterruptType /*itype*/)
         _done_cb(_done_cb_user_data);
       _done_cb = nullptr;
       _done_cb_user_data = nullptr;
-      _sending = false;
     }
   }
 }

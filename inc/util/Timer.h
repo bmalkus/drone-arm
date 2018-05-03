@@ -4,16 +4,10 @@
 #include <cinttypes>
 
 #include <stm32f4xx.h>
+#include "HandlerHelper.h"
 
 /**
  * @brief Helper class for timing related functionalities
- *
- * Uses TIM2 which is counting with 2kHz speed (atm config won't allow for it
- * to be slower). Elapsed time is computed from CNT register of timer. Objects,
- * constructed with timeout parameter will be evaluated to true until timeout
- * is reached.
- * TIM2 has 32-bit counter, so it will overflow after ~24 days, but I doubt I
- * will fly a drone constantly for 24 days ;)
  */
 class Timer
 {
@@ -36,7 +30,12 @@ public:
   /**
    * @brief Returns milliseconds elapsed since calling init()
    */
-  static uint32_t now();
+  static uint32_t millis();
+
+  /**
+   * @brief Returns microseconds elapsed since last millisecond
+   */
+  static uint32_t micros();
 
   /**
    * @brief Initializes timer whose counter will be used to retrieve
@@ -59,8 +58,16 @@ public:
   static TIM_TypeDef *_TIM; //!< CMSIS timer structure for timer whose counter will be used
 
 private:
-  uint32_t _end;
+  volatile static uint32_t _millis;
+
+  volatile uint32_t _end;
   uint32_t _timeout;
+
+  static void tim_event_handler();
+
+  friend void __timer_tim_event_handler(HandlerHelper::InterruptType, void *);
 };
+
+void __timer_tim_event_handler(HandlerHelper::InterruptType, void *);
 
 #endif /* TIMER_H */
