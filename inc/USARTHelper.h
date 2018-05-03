@@ -6,40 +6,30 @@
 class USARTHelper
 {
 public:
-  USARTHelper(Context *context);
-
-  void next_iter();
+  USARTHelper(USART *usart_to_use, Context *context);
 
 private:
-  using menu = void (USARTHelper::*)();
-
+  USART *_usart;
   Context *_context;
+
   char _buffer[64];
+  static const char *delimit_tokens;
+  static char output_buffer[256];
   uint8_t _bytes_read;
 
-  menu _current;
+  bool _bt_passthrough;
 
-  void rx_callback(uint8_t byte);
-  void tx_callback();
+  void main_menu();
+  void bluetooth();
+  void uart();
 
-  bool _send_readings = false;
-  bool _send_ang_rates = false;
-  bool _send_controls = false;
-  uint8_t _sending = 0;
+  void rx_callback(uint8_t byte, USART *USART_to_forward=nullptr);
 
-  void special();
-  void motors();
-  void set_PID_coeff();
-
-  static const char *_help;
-  static const char *_motors;
-  static char output_buffer[64];
-
-  friend void __usart_rx_callback(void *usart_helper, uint8_t bytes);
-  friend void __usart_tx_callback(void *usart_helper);
+  friend void __usart_rx_callback(void *usart_helper, uint8_t byte);
+  friend void __usart_rx_bt_callback(void *usart_helper, uint8_t byte);
 };
 
-void __usart_rx_callback(void *usart_helper, uint8_t bytes);
-void __usart_tx_callback(void *usart_helper);
+void __usart_rx_callback(void *usart_helper, uint8_t byte);
+void __usart_rx_bt_callback(void *usart_helper, uint8_t byte);
 
 #endif /* USARTHELPER_H */

@@ -20,6 +20,7 @@
 
 Context context;
 USART uart_usb(USART2, 115200);
+USART uart_bt(USART3, 115200);
 I2C mpu(I2C1);
 
 extern "C" void SysTick_Handler()
@@ -80,9 +81,13 @@ int main(void)
   SET_BIT(RCC->APB2ENR, RCC_APB2ENR_SYSCFGEN);
   READ_BIT(RCC->APB2ENR, RCC_APB2ENR_SYSCFGEN);
 
-  // Enable clock for USART
+  // Enable clock for USART2
   SET_BIT(RCC->APB1ENR, RCC_APB1ENR_USART2EN);
   READ_BIT(RCC->APB1ENR, RCC_APB1ENR_USART2EN);
+
+  // Enable clock for USART3
+  SET_BIT(RCC->APB1ENR, RCC_APB1ENR_USART3EN);
+  READ_BIT(RCC->APB1ENR, RCC_APB1ENR_USART3EN);
 
   // Enable clock for I2C
   SET_BIT(RCC->APB1ENR, RCC_APB1ENR_I2C1EN);
@@ -123,7 +128,7 @@ int main(void)
   MODIFY_REG(GPIOC->MODER, GPIO_MODER_MODE13, 0b00 << GPIO_MODER_MODE13_Pos);
   // MODIFY_REG(GPIOC->PUPDR, GPIO_PUPDR_PUPD13, 0b01 << GPIO_PUPDR_PUPD13_Pos);
 
-  // Set USART pins
+  // Set USART2 pins
   // PA2 PA3
   MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE2, 0b10 << GPIO_MODER_MODE2_Pos);
   MODIFY_REG(GPIOA->PUPDR, GPIO_PUPDR_PUPD2, 0b01 << GPIO_PUPDR_PUPD2_Pos);
@@ -135,10 +140,23 @@ int main(void)
   MODIFY_REG(GPIOA->OSPEEDR, GPIO_OSPEEDR_OSPEED3, 0b11 << GPIO_OSPEEDR_OSPEED3_Pos);
   MODIFY_REG(GPIOA->AFR[0], GPIO_AFRL_AFSEL3, 0b0111 << GPIO_AFRL_AFSEL3_Pos);
 
+  // Set USART3 pins
+  // PC10 PC11
+  MODIFY_REG(GPIOC->MODER, GPIO_MODER_MODE10, 0b10 << GPIO_MODER_MODE10_Pos);
+  MODIFY_REG(GPIOC->PUPDR, GPIO_PUPDR_PUPD10, 0b01 << GPIO_PUPDR_PUPD10_Pos);
+  MODIFY_REG(GPIOC->OSPEEDR, GPIO_OSPEEDR_OSPEED10, 0b11 << GPIO_OSPEEDR_OSPEED10_Pos);
+  MODIFY_REG(GPIOC->AFR[1], GPIO_AFRH_AFSEL10, 0b0111 << GPIO_AFRH_AFSEL10_Pos);
+
+  MODIFY_REG(GPIOC->MODER, GPIO_MODER_MODE11, 0b10 << GPIO_MODER_MODE11_Pos);
+  MODIFY_REG(GPIOC->PUPDR, GPIO_PUPDR_PUPD11, 0b01 << GPIO_PUPDR_PUPD11_Pos);
+  MODIFY_REG(GPIOC->OSPEEDR, GPIO_OSPEEDR_OSPEED11, 0b11 << GPIO_OSPEEDR_OSPEED11_Pos);
+  MODIFY_REG(GPIOC->AFR[1], GPIO_AFRH_AFSEL11, 0b0111 << GPIO_AFRH_AFSEL11_Pos);
+
   // MODIFY_REG(SYSCFG->EXTICR[3], SYSCFG_EXTICR4_EXTI13, SYSCFG_EXTICR4_EXTI13_PC);
 
   // Enable NVIC interrupts
   NVIC_EnableIRQ(USART2_IRQn);
+  NVIC_EnableIRQ(USART3_IRQn);
   NVIC_EnableIRQ(I2C1_EV_IRQn);
   NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn);
   NVIC_EnableIRQ(TIM3_IRQn);
@@ -166,8 +184,10 @@ int main(void)
 
   uart_usb.init();
   context.uart_usb = &uart_usb;
+  uart_bt.init();
+  context.uart_bt = &uart_bt;
 
-  USARTHelper helper(&context);
+  USARTHelper helper(&uart_usb, &context);
 
   imu.init();
 
@@ -246,7 +266,7 @@ int main(void)
   {
     loop_timer.restart();
 
-    imu.read_all();
+    // imu.read_all();
 
     // helper.next_iter();
 
@@ -290,12 +310,12 @@ int main(void)
       inputs.zero();
 
     // wait for sensors data to be read
-    while (imu.is_busy())
-      ;
+    // while (imu.is_busy())
+    //   ;
 
     char str[128];
-    sprintf(str, "%.02f %.02f %.02f %.02f\n", inputs.yaw, inputs.pitch, inputs.roll, inputs.throttle);
-    uart_usb.send(str);
+    // sprintf(str, "%.02f %.02f %.02f %.02f\n", inputs.yaw, inputs.pitch, inputs.roll, inputs.throttle);
+    // uart_usb.send(str);
 
     // if (READ_BIT(GPIOC->IDR, GPIO_IDR_ID13) == 0)
     // {

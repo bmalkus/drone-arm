@@ -70,21 +70,16 @@ private:
   USART_TypeDef *_USART;
   uint32_t _baud_rate;
 
-  const uint8_t *volatile _to_send = nullptr;
-  volatile uint32_t _size = 0;
-  volatile bool _lock = false;
-
-  uint8_t _byte_to_send;
+  volatile char _out_buffer[256];
+  volatile uint32_t _queue_at = 0;
+  volatile uint32_t _send_from = 0;
+  volatile bool _sending = false;
 
   cb_type _done_cb = nullptr;
   void *_done_cb_user_data = nullptr;
 
   rx_cb_type _rx_cb = nullptr;
   void *_rx_cb_user_data = nullptr;
-
-  void lock();
-  void unlock();
-  bool is_locked();
 
   void handle_event(HandlerHelper::InterruptType itype);
 

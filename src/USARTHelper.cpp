@@ -5,148 +5,119 @@
 #include <cstring>
 #include <cstdio>
 
-char USARTHelper::output_buffer[64];
+const char *USARTHelper::delimit_tokens = " \r\n";
+char USARTHelper::output_buffer[256];
 
-const char *USARTHelper::_help = R"str(Available options:
-?m - motors menu
-? - display this message
-)str";
-
-const char *USARTHelper::_motors = R"str(Available options:
-?g<num> - get motor <num> output (0-1)
-?b - go back
-? - display this message
-)str";
-
-USARTHelper::USARTHelper(Context *context):
+USARTHelper::USARTHelper(USART *usart_to_use, Context *context):
+  _usart(usart_to_use),
   _context(context),
   _bytes_read(0),
-  _current(&USARTHelper::special)
+  _bt_passthrough(false)
 {
-  _context->uart_usb->set_rx_callback(__usart_rx_callback, this);
+  _usart->set_rx_callback(__usart_rx_callback, this);
 }
 
-void USARTHelper::next_iter()
+void USARTHelper::main_menu()
 {
-  _sending = 0;
-  tx_callback();
+  static const char* help = "Available commands: bt uart\n";
+
+  char *main_cmd = strtok(_buffer, delimit_tokens);
+  if (!main_cmd)
+    _usart->send(help);
+  else if (strcmp(main_cmd, "bt") == 0)
+    bluetooth();
+  else if (strcmp(main_cmd, "uart") == 0)
+    uart();
+  else
+    _usart->send(help);
 }
 
-void USARTHelper::rx_callback(uint8_t byte)
+void USARTHelper::bluetooth()
 {
-  if (byte == '\b')
+  static const char* help = "Available subcommands: passthrough\n";
+
+  char *subcmd = strtok(nullptr, delimit_tokens);
+  if (!subcmd)
+    _usart->send(help);
+  else if (strcmp(subcmd, "passthrough") == 0)
   {
-    if (_bytes_read > 0)
-      _bytes_read--;
+    if (_usart == _context->uart_bt)
+      _usart->send("Cannot set BT passthrough when communicating via BT\n");
+    else
+    {
+      _usart->send("Starting passthrough\n");
+      _bt_passthrough = true;
+      _context->uart_bt->set_rx_callback(__usart_rx_bt_callback, this);
+    }
   }
-  else if (byte == '\n')
+  else
+    _usart->send(help);
+}
+
+void USARTHelper::uart()
+{
+  static const char* help = "Available subcommands: toggle\n";
+
+  char *subcmd = strtok(nullptr, delimit_tokens);
+  if (!subcmd || strlen(subcmd) == 0)
   {
-    _buffer[_bytes_read++] = '\0';
+    sprintf(output_buffer, "Currently communicating via %s\n", (_usart == _context->uart_bt) ? "BT" : "USB");
+    _usart->send(output_buffer);
+  }
+  else if (strcmp(subcmd, "toggle") == 0)
+  {
+    USART *new_uart = (_usart == _context->uart_bt) ? _context->uart_usb : _context->uart_bt;
+    sprintf(output_buffer, "Switching UART to %s\n", (new_uart == _context->uart_usb) ? "USB" : "BT");
+    _usart->send(output_buffer);
+    _usart->clear_rx_callback();
+    _usart = new_uart;
+    _usart->set_rx_callback(__usart_rx_callback, this);
+  }
+  else
+    _usart->send(help);
+}
+
+void USARTHelper::rx_callback(uint8_t byte, USART *USART_to_forward)
+{
+  if (byte == '\n')
+  {
+    if (_bt_passthrough)
+    {
+      if (_bytes_read >= 3 && strncmp(_buffer, "$$$", 3) == 0)
+      {
+        _usart->send("Ending passthrough\n");
+        _bt_passthrough = false;
+        _context->uart_bt->clear_rx_callback();
+        return;
+      }
+      else if (_bytes_read == 0 || _buffer[_bytes_read - 1] != '\r')
+      {
+        _buffer[_bytes_read++] = '\r';
+        _bytes_read %= 64;
+      }
+      _buffer[_bytes_read++] = '\n';
+      _bytes_read %= 64;
+      _buffer[_bytes_read++] = '\0';
+
+      if (!USART_to_forward)
+        USART_to_forward = _context->uart_bt;
+
+      USART_to_forward->send(_buffer);
+    }
+    else
+    {
+      _buffer[_bytes_read++] = '\n';
+      _bytes_read %= 64;
+      _buffer[_bytes_read++] = '\0';
+      main_menu();
+    }
     _bytes_read = 0;
-    (this->*_current)();
   }
   else
+  {
     _buffer[_bytes_read++] = byte;
-}
-
-void USARTHelper::tx_callback()
-{
-  if (_sending == 0 && _send_readings)
-  {
-    sprintf(output_buffer, "r %6d %6d %6d\n", _context->readings->x, _context->readings->y, _context->readings->z);
-    _context->uart_usb->send(output_buffer, __usart_tx_callback, this);
+    _bytes_read %= 64;
   }
-  else if (_sending == _send_readings && _send_ang_rates)
-  {
-    sprintf(output_buffer, "a %6.2f %6.2f %6.2f\n", _context->angular_rates->pitch, _context->angular_rates->roll, _context->angular_rates->yaw);
-    _context->uart_usb->send(output_buffer, __usart_tx_callback, this);
-  }
-  else if (_sending == (_send_readings + _send_ang_rates) && _send_controls)
-  {
-    sprintf(output_buffer, "c %6.2f %6.2f %6.2f\n", _context->controls->pitch, _context->controls->roll, _context->controls->yaw);
-    _context->uart_usb->send(output_buffer, __usart_tx_callback, this);
-  }
-  _sending++;
-}
-
-void USARTHelper::special()
-{
-  if (_buffer[0] == 'r')
-    _send_readings = !_send_readings;
-  else if (_buffer[0] == 'a')
-    _send_ang_rates = !_send_ang_rates;
-  else if (_buffer[0] == 'c')
-    _send_controls = !_send_controls;
-  else if (_buffer[0] == 's')
-    set_PID_coeff();
-  // if (strcmp(_buffer, "?m") == 0)
-  // {
-  //   _context->uart_usb->send(_motors);
-  //   _current = &USARTHelper::motors;
-  // }
-  // else
-  //   _context->uart_usb->send(_help);
-}
-
-void USARTHelper::motors()
-{
-  if (strcmp(_buffer, "?b") == 0)
-  {
-    _context->uart_usb->send(_help);
-    _current = &USARTHelper::special;
-  }
-  else if (_buffer[0] == '?' && _buffer[1] == 'g')
-  {
-    switch (_buffer[2])
-    {
-      case '1':
-      case '2':
-      case '3':
-      case '4':
-        if (_context->motors[_buffer[2] - '0' - 1]->armed())
-          sprintf(output_buffer, "%.2f (armed)\n", _context->motors[_buffer[2] - '0' - 1]->current());
-        else
-          sprintf(output_buffer, "%.2f (not armed)\n", _context->motors[_buffer[2] - '0' - 1]->current());
-        break;
-      default:
-        sprintf(output_buffer, "<num> must be 1-4\n");
-    }
-    _context->uart_usb->send(output_buffer);
-  }
-  else
-    _context->uart_usb->send(_motors);
-}
-
-void USARTHelper::set_PID_coeff()
-{
-  char part = '\0';
-  float val = 1.f;
-  if (2 != sscanf(_buffer, "s%c %f", &part, &val))
-    sprintf(output_buffer, "Input must be of form 's<part> <val>'\n");
-  else
-  {
-    switch(part)
-    {
-      case 'p':
-      case 'P':
-        _context->pid->set_coeff(SimplePID::P, val);
-        sprintf(output_buffer, "Set P PID coeff to %f\n", val);
-        break;
-      case 'd':
-      case 'D':
-        _context->pid->set_coeff(SimplePID::D, val);
-        sprintf(output_buffer, "Set D PID coeff to %f\n", val);
-        break;
-      case 'i':
-      case 'I':
-        _context->pid->set_coeff(SimplePID::I, val);
-        sprintf(output_buffer, "Set I PID coeff to %f\n", val);
-        break;
-      default:
-        sprintf(output_buffer, "Part must be one of 'P', 'I', 'D'\n");
-    }
-  }
-  _context->uart_usb->send(output_buffer);
 }
 
 // *****************************************************************************
@@ -155,12 +126,12 @@ void USARTHelper::set_PID_coeff()
 
 void __usart_rx_callback(void *usart_helper, uint8_t byte)
 {
-  USARTHelper *helper = (USARTHelper*) usart_helper;
+  auto *helper = (USARTHelper*) usart_helper;
   helper->rx_callback(byte);
 }
 
-void __usart_tx_callback(void *usart_helper)
+void __usart_rx_bt_callback(void *usart_helper, uint8_t byte)
 {
-  USARTHelper *helper = (USARTHelper*) usart_helper;
-  helper->tx_callback();
+  auto *helper = (USARTHelper*) usart_helper;
+  helper->rx_callback(byte, helper->_context->uart_usb);
 }

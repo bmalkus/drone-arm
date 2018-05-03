@@ -63,23 +63,7 @@ public:
 
   static void set_handler(InterruptType interrupt, handler_type handler, void *user_data);
 
-  static constexpr HandlerHelper::InterruptType interrupt_for(TIM_TypeDef *TIM) {
-    if (TIM == TIM3)
-      return InterruptType::TIM3_INT;
-    else if (TIM == TIM4)
-      return InterruptType::TIM4_INT;
-    else if (TIM == TIM5)
-      return InterruptType::TIM5_INT;
-    else if (TIM == TIM6)
-      return InterruptType::TIM6_DAC_INT;
-    else if (TIM == TIM8)
-      return InterruptType::TIM8_CC_INT;
-    else if (TIM == TIM9)
-      return InterruptType::TIM1_BRK_TIM9_INT;
-    else if (TIM == TIM11)
-      return InterruptType::TIM1_TRG_COM_TIM11_INT;
-    return InterruptType::INVALID;
-  }
+  static constexpr HandlerHelper::InterruptType interrupt_for(void *struct_ptr);
 
   friend void USART1_IRQHandler();
   friend void USART2_IRQHandler();
@@ -96,5 +80,36 @@ public:
   friend void TIM6_DAC_IRQHandler();
   friend void TIM8_CC_IRQHandler();
 };
+
+constexpr HandlerHelper::InterruptType HandlerHelper::interrupt_for(void *struct_ptr)
+{
+  if (struct_ptr == TIM3)
+    return InterruptType::TIM3_INT;
+  else if (struct_ptr == TIM4)
+    return InterruptType::TIM4_INT;
+  else if (struct_ptr == TIM5)
+    return InterruptType::TIM5_INT;
+  else if (struct_ptr == TIM6)
+    return InterruptType::TIM6_DAC_INT;
+  else if (struct_ptr == TIM8)
+    return InterruptType::TIM8_CC_INT;
+  else if (struct_ptr == TIM9)
+    return InterruptType::TIM1_BRK_TIM9_INT;
+  else if (struct_ptr == TIM11)
+    return InterruptType::TIM1_TRG_COM_TIM11_INT;
+  else if (struct_ptr == USART1)
+    return HandlerHelper::USART1_INT;
+  else if (struct_ptr == USART2)
+    return HandlerHelper::USART2_INT;
+  else if (struct_ptr == USART3)
+    return HandlerHelper::USART3_INT;
+  else if (struct_ptr == UART4)
+    return HandlerHelper::UART4_INT;
+  else if (struct_ptr == UART5)
+    return HandlerHelper::UART5_INT;
+  else if (struct_ptr == USART6)
+    return HandlerHelper::USART6_INT;
+  return InterruptType::INVALID;
+}
 
 #endif /* HANDLERHELPER_H */
