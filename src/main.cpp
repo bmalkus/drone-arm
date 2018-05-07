@@ -7,7 +7,7 @@
 #include <util/Context.h>
 #include <protocol/I2C.h>
 #include <IOwrapper/IMU.h>
-#include <IOwrapper/Motors.h>
+#include <IOwrapper/Motor.h>
 #include <protocol/PWM.h>
 #include <protocol/PWMInput.h>
 #include <filter/GyroRateFilter.h>
@@ -16,7 +16,9 @@
 #include <protocol/USART.h>
 #include <util/USARTHelper.h>
 #include <util/misc.h>
-#include <IOwrapper/Sticks.h>
+#include <IOwrapper/StickInputs.h>
+#include <filter/GyroAngleFilter.h>
+#include "PID/AnglePID.h"
 
 extern "C" void SysTick_Handler()
 {
@@ -161,7 +163,7 @@ int main(void)
   NVIC_EnableIRQ(TIM8_CC_IRQn);
 
   // Set I2C pins
-  // PB8 PA9
+  // PB8 PB9
   MODIFY_REG(GPIOB->MODER, GPIO_MODER_MODE8, 0b10 << GPIO_MODER_MODE8_Pos);
   SET_BIT(GPIOB->OTYPER, GPIO_OTYPER_OT8);
   MODIFY_REG(GPIOB->PUPDR, GPIO_PUPDR_PUPD8, 0b01 << GPIO_PUPDR_PUPD8_Pos);
@@ -175,12 +177,18 @@ int main(void)
   MODIFY_REG(GPIOB->AFR[1], GPIO_AFRH_AFSEL9, 0b0100 << GPIO_AFRH_AFSEL9_Pos);
 
   // set pins for PWM
-  // PA8, PA9
+  // PA8, PA9, PA10, PA11
   MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE8, 0b10 << GPIO_MODER_MODE8_Pos);
   MODIFY_REG(GPIOA->AFR[1], GPIO_AFRH_AFSEL8, 0b0001 << GPIO_AFRH_AFSEL8_Pos);
 
   MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE9, 0b10 << GPIO_MODER_MODE9_Pos);
   MODIFY_REG(GPIOA->AFR[1], GPIO_AFRH_AFSEL9, 0b0001 << GPIO_AFRH_AFSEL9_Pos);
+
+  MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE10, 0b10 << GPIO_MODER_MODE10_Pos);
+  MODIFY_REG(GPIOA->AFR[1], GPIO_AFRH_AFSEL10, 0b0001 << GPIO_AFRH_AFSEL10_Pos);
+
+  MODIFY_REG(GPIOA->MODER, GPIO_MODER_MODE11, 0b10 << GPIO_MODER_MODE11_Pos);
+  MODIFY_REG(GPIOA->AFR[1], GPIO_AFRH_AFSEL11, 0b0001 << GPIO_AFRH_AFSEL11_Pos);
 
   // set pins for PWM input
   // PC6, PC7, PC8, PC9
@@ -200,11 +208,11 @@ int main(void)
   Timer::init();
 
   USART uart_usb(USART2, 115200);
-  // USART uart_bt(USART3, 115200);
+  USART uart_bt(USART3, 115200);
   uart_usb.init();
-  // uart_bt.init();
+  uart_bt.init();
 
-  USARTHelper helper(&uart_usb);
+  USARTHelper helper(&uart_bt);
 
   I2C mpu(I2C1);
   IMU imu(&mpu);
@@ -214,38 +222,44 @@ int main(void)
 
   PWMInput main_inputs(TIM3, 1'000'000, 4);
 
-  // while (!imu.ready_to_read())
-  //   ;
+  Timer _imu_init(300);
+
+  while (!imu.ready_to_read()) {
+    if (!_imu_init) {
+      imu.init();
+      _imu_init.restart();
+    }
+  }
 
   constexpr auto gyro_sensitivity = static_cast<float>((250.f * M_PI)/(180.f * ((1 << 15) - 1)));
 
-  GyroRateFilter gyro_filter(gyro_sensitivity);
+  GyroAngleFilter gyro_filter(gyro_sensitivity, 1e-3);
 
-  // pwm.init();
-  // pwm.start();
+  pwm.init();
+  pwm.start();
 
   main_inputs.init();
   main_inputs.start();
+  StickInputs stick_inputs(&main_inputs);
 
-  // Motors m1(&pwm, 1, {{-1, -1, 0}});
-  // Motors m3(&pwm, 2, {{1, 1, 0}});
+  Motor motors[4] = {
+      Motor(&pwm, 1, {{1, 1, 0}}),
+      Motor(&pwm, 2, {{-1, -1, 0}}),
+      Motor(&pwm, 3, {{-1, 1, 0}}),
+      Motor(&pwm, 4, {{1, -1, 0}}),
+  };
 
-  // m1.init();
-  // m3.init();
-  // context.motors[0] = &m1;
-  // context.motors[2] = &m3;
+  for (Motor &m : motors)
+    m.init();
 
-  // while(!m1.ready())
-  //   ;
+  for (Motor &m : motors)
+    while(m.ready())
+      ;
 
-  // bool clicked = false;
-
-  // uint8_t speed = 0;
-
-  RatePID pid;
+  AnglePID pid;
 
   Readings gyro;
-  AngularRates rates;
+  EulerianAngles angles;
   Controls controls;
 
   Sticks inputs;
@@ -253,128 +267,68 @@ int main(void)
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wreturn-stack-address"
   Context::uart_usb = &uart_usb;
-  // Context::uart_bt = &uart_bt;
+  Context::uart_bt = &uart_bt;
   Context::usart_helper = &helper;
   Context::readings = &gyro;
-  Context::angular_rates = &rates;
+  Context::eulerian_angles = &angles;
   Context::controls = &controls;
+  Context::inputs = &inputs;
   Context::pid = &pid;
+  for (int i = 0; i < 4; ++i)
+    Context::motors[i] = &motors[i];
 #pragma clang diagnostic pop
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wmissing-noreturn"
 
-  Timer loop_timer(1000);
+  Timer loop_timer(0, 999);
+
+  motors[2].disable();
+  motors[3].disable();
 
   for(;;)
   {
-    loop_timer.restart();
+    imu.read_all();
 
-    // imu.read_all();
+    inputs = stick_inputs.get();
 
-    // rates = gyro_filter.process(gyro);
-
-    // controls = pid.process(rates, {{0.f, 0.f, 0.f, speed / 10.f}});
-
-    // m1.set(controls);
-    // m3.set(controls);
-
-    // variable used to check against lost PWM input
-    // if more than two channels are reported as zero
-    // (which mean there are no PWM inputs for them)
-    // zero all the inputs
-    uint8_t lost = 0;
-
-    auto th = main_inputs.get(Sticks::THROTTLE);
-    if (1000 <= th && th <= 2000)
-      inputs.throttle = (th - 1000) / 1000.f;
-    else if (th == 0)
-    {
-      inputs.throttle = 0.f;
-      ++lost;
+    if (stick_inputs.should_be_armed() && !motors[0].armed()) {
+      helper.send("Arming\n");
+      for (Motor &m : motors)
+        m.arm();
+    } else if (!stick_inputs.should_be_armed() && motors[0].armed()) {
+      helper.send("Disarming\n");
+      for (Motor &m : motors)
+        m.disarm();
     }
 
-    for (auto ch : {Sticks::PITCH, Sticks::ROLL, Sticks::YAW})
-    {
-      auto val = main_inputs.get(ch);
-      if (1000 <= val && val <= 2000)
-        inputs.set(ch, (val - 1000) / 1000.f);
-      else if (val == 0)
-      {
-        inputs.set(ch, 0.f);
-        ++lost;
-      }
+    if (stick_inputs.should_calibrate()) {
+      helper.send("Calibrating...");
+      imu.calibrate(100);
+      gyro_filter.reset_angles();
+      helper.send("done\n");
     }
-
-    if (lost >= 3)
-      inputs.zero();
 
     // wait for sensors data to be read
     // while (imu.is_busy())
     //   ;
 
-    // printf("%.02f %.02f %.02f %.02f\n", inputs.yaw, inputs.pitch, inputs.roll, inputs.throttle);
-    int32_t start = Timer::micros();
-    uart_usb.send("12345678901234567890\n");
-    int32_t time = Timer::micros() - start;
-    // printf("%lu\n", time);
-    // uart_usb.send(str);
+    gyro = imu.gyro();
 
-    // if (READ_BIT(GPIOC->IDR, GPIO_IDR_ID13) == 0)
-    // {
-      // if (!clicked)
-      // {
-      //   clicked = true;
-      //   if (!m1.armed())
-      //   {
-      //     m1.arm();
-      //     m3.arm();
-      //   }
-      //   else
-      //   {
-      //     if (speed < 10)
-      //     {
-      //       speed++;
-      //       // m1.set({{0.f, 0.f, 0.f, speed / 10.f}});
-      //       // m3.set({{0.f, 0.f, 0.f, 0.5f - speed / 10.f}});
-      //     }
-      //     else
-      //     {
-      //       speed = 0;
-      //       m1.disarm();
-      //       m3.disarm();
-      //     }
-      //   }
-      //   // if (pwm_val == 2000)
-      //   //   pwm_val = 750;
-      //   // else
-      //   //   pwm_val += 250;
-      //   // pwm.set(1, pwm_val);
-      //   // imu.calibrate(50);
-      //   // uart_usb.send(str);
-      //   // sprintf(str, "%lu %lu %u\n", loop_timer.now(), loop_timer._end, bool(loop_timer));
-      //   // uart_usb.send(str);
-      // }
-    // }
-    // else
-      // clicked = false;
+    gyro_filter.set(gyro);
 
-    // imu.read_all();
+    angles = gyro_filter.get_angles();
+
+    controls = pid.process(angles, inputs);
+
+    for (Motor &m : motors)
+      m.set(controls);
+
+    helper.next_loop_iter();
 
     while(loop_timer)
       ;
-
-    // Readings acc = imu.acc();
-
-    // gyro_filter.set(gyro, acc);
-
-    // char str[128];
-//    sprintf(str, "r %6d %6d %6d %6d %6d %6d\n", gyro.x, gyro.y, gyro.z, acc.x, acc.y, acc.z);
-    // Angles angles = gyro_filter.get_angles();
-    // sprintf(str, "r %6.2f %6.2f %6.2f\n", angles.x, angles.y, angles.z);
-    // sprintf(str, "%d\n", TIM1->CNT);
-    // sprintf(str, "123\n");
-//    if (!uart_usb.is_sending())
+    loop_timer.restart();
   }
 #pragma clang diagnostic pop
 }

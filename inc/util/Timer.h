@@ -25,7 +25,7 @@ public:
    * @param timeout (in milliseconds), timeout after which object will be
    * evaluated to false
    */
-  Timer(uint32_t timeout);
+  explicit Timer(uint32_t timeout_millis, uint32_t timeout_micros=0);
 
   /**
    * @brief Returns milliseconds elapsed since calling init()
@@ -60,8 +60,10 @@ public:
 private:
   volatile static uint32_t _millis;
 
-  volatile uint32_t _end;
-  uint32_t _timeout;
+  volatile uint32_t _end_millis;
+  volatile uint32_t _end_micros;
+  uint32_t _timeout_millis;
+  uint32_t _timeout_micros;
 
   static void tim_event_handler();
 

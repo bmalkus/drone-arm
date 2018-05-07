@@ -39,7 +39,7 @@ set(SOURCE_FILES
         src/protocol/I2C.cpp
         src/IOwrapper/IMU.cpp
         src/main.cpp
-        src/IOwrapper/Motors.cpp
+        src/IOwrapper/Motor.cpp
         src/protocol/PWM.cpp
         src/protocol/PWMInput.cpp
         src/PID/RatePID.cpp
@@ -49,6 +49,6 @@ set(SOURCE_FILES
         src/protocol/USART.cpp
         src/util/USARTHelper.cpp
         src/util/misc.cpp
-        startup/startup_stm32f446xx.s src/IOwrapper/Sticks.cpp inc/IOwrapper/Sticks.h inc/PID/common.h src/util/Context.cpp)
+        startup/startup_stm32f446xx.s src/IOwrapper/StickInputs.cpp inc/IOwrapper/StickInputs.h inc/PID/common.h src/util/Context.cpp src/PID/AnglePID.cpp inc/PID/AnglePID.h)
 
 add_executable(HelloWorld ${SOURCE_FILES})

@@ -11,6 +11,8 @@ public:
   void send(char c);
   void send(const char *str);
 
+  void next_loop_iter();
+
 private:
   USART *_usart;
 
@@ -21,9 +23,16 @@ private:
 
   bool _bt_passthrough;
 
+  bool _log_inputs = false, _log_controls = false, _log_angles = false;
+
   void main_menu();
+
   void bluetooth();
   void uart();
+  void motor();
+  void log();
+  void pid();
+  void get_pid();
 
   void rx_callback(uint8_t byte, USART *USART_to_forward=nullptr);
 

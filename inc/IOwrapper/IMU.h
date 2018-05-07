@@ -14,11 +14,11 @@ union Readings {
   volatile int16_t data16[3];
 };
 
-union Angles {
+union EulerianAngles {
   struct {
     float x, y, z;
   };
-  float xyz[3];
+  float data[3];
 };
 
 union AngularRates {

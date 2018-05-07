@@ -9,22 +9,21 @@ GyroAngleFilter::GyroAngleFilter(float gyro_sensitivity, float delay):
   // empty
 }
 
-void GyroAngleFilter::set(const Readings &gyro, const Readings &/* acc */)
+void GyroAngleFilter::set(const Readings &gyro)
 {
   float _gyro[3] = {gyro.x * _gyro_sensitivity * _delay, gyro.y * _gyro_sensitivity * _delay, gyro.z * _gyro_sensitivity * _delay};
   _angles.x += _gyro[0] + _gyro[1] * sin(_angles.y) * tan(_angles.y) + _gyro[2] * cos(_angles.x) * tan(_angles.y);
   _angles.y += _gyro[1] * cos(_angles.x) - _gyro[2] * sin(_angles.x);
   _angles.z += _gyro[1] * sin(_angles.x)/cos(_angles.y) + _gyro[2] * cos(_angles.x)/cos(_angles.y);
-  for (uint8_t i = 0; i < 3; ++i)
-  {
-    if (_angles.xyz[i] > 2*M_PI)
-      _angles.xyz[i] -= 2*M_PI;
-    else if (_angles.xyz[i] < 0)
-      _angles.xyz[i] += 2*M_PI;
+  for (float &ang : _angles.data) {
+    if (ang > M_PI)
+      ang -= 2*M_PI;
+    else if (ang < -M_PI)
+      ang += 2*M_PI;
   }
 }
 
-Angles GyroAngleFilter::get_angles()
+EulerianAngles GyroAngleFilter::get_angles()
 {
   return _angles;
 }

@@ -3,8 +3,9 @@
 USART *Context::uart_usb = nullptr;
 USART *Context::uart_bt = nullptr;
 USARTHelper *Context::usart_helper = nullptr;
-Motors *Context::motors[4] = {nullptr, nullptr, nullptr, nullptr};
+Motor *Context::motors[4] = {nullptr, nullptr, nullptr, nullptr};
 Readings *Context::readings = nullptr;
-AngularRates *Context::angular_rates = nullptr;
+EulerianAngles *Context::eulerian_angles = nullptr;
 Controls *Context::controls = nullptr;
-RatePID *Context::pid = nullptr;
+Sticks *Context::inputs = nullptr;
+AnglePID *Context::pid = nullptr;

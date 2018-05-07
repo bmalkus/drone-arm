@@ -10,10 +10,11 @@
 TIM_TypeDef *Timer::_TIM;
 volatile uint32_t Timer::_millis;
 
-Timer::Timer(uint32_t timeout):
-    _timeout(timeout)
+Timer::Timer(uint32_t timeout_millis, uint32_t timeout_micros):
+  _timeout_millis(timeout_millis),
+  _timeout_micros(timeout_micros)
 {
-  _end = millis() + _timeout;
+  restart();
 }
 
 uint32_t Timer::millis()
@@ -51,17 +52,23 @@ void Timer::init()
 
 void Timer::restart() volatile
 {
-  _end = millis() + _timeout;
+  _end_millis = _millis + (_TIM->CNT / 1'000) + _timeout_millis;
+  _end_micros = micros() + _timeout_micros;
+  if (_end_micros >= 1'000)
+  {
+    _end_millis += 1;
+    _end_micros -= 1'000;
+  }
 }
 
 Timer::operator bool() const volatile
 {
-  return millis() < _end;
+  return millis() < _end_millis || (millis() == _end_millis && micros() < _end_micros);
 }
 
 void Timer::tim_event_handler()
 {
-  _millis += 16'000'000;
+  _millis += 16'000;
   CLEAR_BIT(_TIM->SR, TIM_SR_UIF);
 }
 

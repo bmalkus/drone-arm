@@ -1,24 +1,29 @@
-#include <PID/RatePID.h>
+#include "PID/AnglePID.h"
 
 #include <cmath>
 
-static constexpr float MAX_INPUT_ANG_RATE = M_PI_2;
-static constexpr float MAX_ANG_RATE = ((250.f * M_PI) / 180.f);
-static constexpr float SCALE_MULTIPLIER = (1.f / MAX_ANG_RATE) * (1.f / 3.f);
+static constexpr float MAX_INPUT_ANGLE = M_PI_4;
+static constexpr float MAX_ANGLE = M_PI;
+static constexpr float SCALE_MULTIPLIER = (1.f / MAX_ANGLE) * (1.f / 3.f);
 
-RatePID::RatePID():
+AnglePID::AnglePID():
   _coeffs{{1.f, 1.f, 1.f}}
 {
   for (float &c : _coeffs.data)
     c *= SCALE_MULTIPLIER;
 }
 
-void RatePID::set_coeff(PART part, float coeff)
+void AnglePID::set_coeff(AnglePID::PART part, float coeff)
 {
   _coeffs.data[part] = coeff * SCALE_MULTIPLIER;
 }
 
-Controls RatePID::process(AngularRates rates, Sticks inputs)
+float AnglePID::get_coeff(AnglePID::PART part)
+{
+  return _coeffs.data[part];
+}
+
+Controls AnglePID::process(EulerianAngles &angles, Sticks &inputs)
 {
   _curr_errors = 1 - _curr_errors;
 
@@ -26,7 +31,7 @@ Controls RatePID::process(AngularRates rates, Sticks inputs)
 
   for (uint8_t i = 0; i < 3; ++i)
   {
-    _errors[_curr_errors].data[i] = ((inputs.data[i] * MAX_INPUT_ANG_RATE) - rates.data[i]);
+    _errors[_curr_errors].data[i] = ((inputs.data[i] * MAX_INPUT_ANGLE) - angles.data[i]);
 
     // P part
     ret.data[i] += _errors[_curr_errors].data[i] * _coeffs.P;

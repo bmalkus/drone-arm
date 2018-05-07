@@ -30,10 +30,10 @@ union Controls
   float data[4];
 };
 
-class Motors
+class Motor
 {
 public:
-  Motors(PWM *pwm, uint8_t channel, Multipliers multipliers);
+  Motor(PWM *pwm, uint8_t channel, Multipliers multipliers);
 
   void init();
 
@@ -47,6 +47,10 @@ public:
 
   float current();
 
+  void enable();
+  void disable();
+  bool is_disabled();
+
 private:
   float _current;
 
@@ -56,6 +60,8 @@ private:
   bool _armed;
   bool _init_called;
   Timer _init_timer;
+
+  bool _disabled = false;
 
   float _pwm_multiplier;
   uint16_t _pwm_1_ms;

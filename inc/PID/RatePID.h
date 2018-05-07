@@ -2,10 +2,10 @@
 #define SIMPLEPID_H
 
 #include <filter/GyroRateFilter.h>
-#include <IOwrapper/Motors.h>
+#include <IOwrapper/Motor.h>
 #include <util/misc.h>
 #include <IOwrapper/IMU.h>
-#include "IOwrapper/Sticks.h"
+#include "IOwrapper/StickInputs.h"
 #include "PID/common.h"
 
 class RatePID
