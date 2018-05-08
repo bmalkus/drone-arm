@@ -9,8 +9,7 @@
 /**
  * @brief Helper class for timing related functionalities
  */
-class Timer
-{
+class Timer {
 public:
   /**
    * @brief Constructs default timer object, object will always be evaluated to
@@ -25,7 +24,7 @@ public:
    * @param timeout (in milliseconds), timeout after which object will be
    * evaluated to false
    */
-  explicit Timer(uint32_t timeout_millis, uint32_t timeout_micros=0);
+  explicit Timer(uint32_t timeout_millis, uint32_t timeout_micros = 0);
 
   /**
    * @brief Returns milliseconds elapsed since calling init()

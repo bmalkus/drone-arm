@@ -7,8 +7,7 @@
 #include <util/misc.h>
 #include <util/Timer.h>
 
-class PWMInput
-{
+class PWMInput {
 public:
   PWMInput(TIM_TypeDef *TIM, uint32_t counter_freq, uint8_t channels);
 

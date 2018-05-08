@@ -7,13 +7,11 @@
 #include <IOwrapper/StickInputs.h>
 #include <PID/common.h>
 
-class AnglePID
-{
+class AnglePID {
 public:
   AnglePID();
 
-  enum PART
-  {
+  enum PART {
     P, I, D
   };
 

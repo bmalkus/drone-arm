@@ -3,6 +3,8 @@
 
 #include <stm32f4xx.h>
 
+extern "C" void SysTick_Handler();
+
 extern "C" void USART1_IRQHandler();
 extern "C" void USART2_IRQHandler();
 extern "C" void USART3_IRQHandler();
@@ -49,7 +51,7 @@ public:
   };
 
 private:
-  using handler_type = void (*)(InterruptType, void*);
+  using handler_type = void (*)(InterruptType, void *);
 
   struct Handler {
     handler_type handler;
@@ -84,8 +86,7 @@ public:
   friend void TIM8_CC_IRQHandler();
 };
 
-constexpr HandlerHelper::InterruptType HandlerHelper::interrupt_for(void *struct_ptr)
-{
+constexpr HandlerHelper::InterruptType HandlerHelper::interrupt_for(void *struct_ptr) {
   if (struct_ptr == TIM2)
     return InterruptType::TIM2_INT;
   else if (struct_ptr == TIM3)

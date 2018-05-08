@@ -8,7 +8,7 @@
 #include <util/HandlerHelper.h>
 #include <util/misc.h>
 
-using rx_cb_type = void (*)(void*, uint8_t);
+using rx_cb_type = void (*)(void *, uint8_t);
 
 /**
  * @brief Class responsible for managing USART interface
@@ -16,8 +16,7 @@ using rx_cb_type = void (*)(void*, uint8_t);
  * Note: Appropriate IO pins must be configured separately in order to USART work properly,
  * as such configuration lays beyond this class responsibility
  */
-class USART
-{
+class USART {
 public:
   /**
    * @brief Constructor
@@ -38,7 +37,7 @@ public:
    *
    * @param to_send char array (string) to send
    */
-  void send(const char *to_send, cb_type cb=nullptr, void *user_data=nullptr);
+  void send(const char *to_send, cb_type cb = nullptr, void *user_data = nullptr);
 
   /**
    * @brief Sends single byte via interface
@@ -50,7 +49,7 @@ public:
   /**
    * @brief Sets callback to be called when data arrives
    */
-  void set_rx_callback(rx_cb_type cb, void *user_data=nullptr);
+  void set_rx_callback(rx_cb_type cb, void *user_data = nullptr);
 
   /**
    * @brief Clears callback for arriving data
@@ -68,7 +67,7 @@ private:
   volatile uint32_t _send_from = 0;
 
   volatile cb_type _done_cb = nullptr;
-  void * volatile _done_cb_user_data = nullptr;
+  void *volatile _done_cb_user_data = nullptr;
 
   rx_cb_type _rx_cb = nullptr;
   void *_rx_cb_user_data = nullptr;

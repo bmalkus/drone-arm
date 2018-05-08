@@ -20,13 +20,7 @@
 #include <filter/GyroAngleFilter.h>
 #include "PID/AnglePID.h"
 
-extern "C" void SysTick_Handler()
-{
-  return;
-}
-
-int main(void)
-{
+int main() {
   // Use external clock to generate HSE
   SET_BIT(RCC->CR, RCC_CR_HSEBYP);
   SET_BIT(RCC->CR, RCC_CR_HSEON);
@@ -39,12 +33,12 @@ int main(void)
   SET_BIT(RCC->PLLCFGR, RCC_PLLCFGR_PLLSRC);
   // Configure PLL prescalers
   MODIFY_REG(
-    RCC->PLLCFGR,
-    RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLR | RCC_PLLCFGR_PLLQ,
-    RCC_PLLCFGR_PLLM_2 | // PLLM = 4
-    RCC_PLLCFGR_PLLN_7 | RCC_PLLCFGR_PLLN_5 | RCC_PLLCFGR_PLLN_4 | RCC_PLLCFGR_PLLN_2 | // PLLN = 180
-    RCC_PLLCFGR_PLLR_1 | // PLLR = 2
-    RCC_PLLCFGR_PLLQ_3 // PLLQ = 8
+      RCC->PLLCFGR,
+      RCC_PLLCFGR_PLLM | RCC_PLLCFGR_PLLN | RCC_PLLCFGR_PLLP | RCC_PLLCFGR_PLLR | RCC_PLLCFGR_PLLQ,
+      RCC_PLLCFGR_PLLM_2 | // PLLM = 4
+          RCC_PLLCFGR_PLLN_7 | RCC_PLLCFGR_PLLN_5 | RCC_PLLCFGR_PLLN_4 | RCC_PLLCFGR_PLLN_2 | // PLLN = 180
+          RCC_PLLCFGR_PLLR_1 | // PLLR = 2
+          RCC_PLLCFGR_PLLQ_3 // PLLQ = 8
   );
 
   // Enable PLL
@@ -231,7 +225,7 @@ int main(void)
     }
   }
 
-  constexpr auto gyro_sensitivity = static_cast<float>((250.f * M_PI)/(180.f * ((1 << 15) - 1)));
+  constexpr auto gyro_sensitivity = static_cast<float>((250.f * M_PI) / (180.f * ((1 << 15) - 1)));
 
   GyroAngleFilter gyro_filter(gyro_sensitivity, 1e-3);
 
@@ -253,7 +247,7 @@ int main(void)
     m.init();
 
   for (Motor &m : motors)
-    while(m.ready())
+    while (m.ready())
       ;
 
   AnglePID pid;
@@ -286,8 +280,7 @@ int main(void)
   motors[2].disable();
   motors[3].disable();
 
-  for(;;)
-  {
+  for (;;) {
     imu.read_all();
 
     inputs = stick_inputs.get();

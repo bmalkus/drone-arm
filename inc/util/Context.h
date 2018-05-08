@@ -8,8 +8,7 @@
 #include <util/USARTHelper.h>
 #include "PID/AnglePID.h"
 
-struct Context
-{
+struct Context {
   static USART *uart_usb;
   static USART *uart_bt;
   static USARTHelper *usart_helper;

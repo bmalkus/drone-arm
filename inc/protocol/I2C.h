@@ -14,8 +14,7 @@
  * Note: Appropriate IO pins must be configured separately in order to I2C work properly,
  * as such configuration lays beyond this class responsibility
  */
-class I2C
-{
+class I2C {
 public:
   /**
    * @brief Constructor
@@ -48,7 +47,7 @@ public:
    * @param cb Callback to call after sending finishes
    * @param user_data User data passed to callback
    */
-  bool send(uint8_t byte, bool do_stop_cond=true, cb_type cb=nullptr, void *user_data=nullptr);
+  bool send(uint8_t byte, bool do_stop_cond = true, cb_type cb = nullptr, void *user_data = nullptr);
   /**
    * @brief Send stream of bytes to slave device - asynchronous
    *
@@ -58,7 +57,11 @@ public:
    * @param cb Callback to call after sending finishes
    * @param user_data User data passed to callback
    */
-  bool send(const uint8_t *bytes, uint8_t len, bool do_stop_cond=true, cb_type cb=nullptr, void *user_data=nullptr);
+  bool send(const uint8_t *bytes,
+            uint8_t len,
+            bool do_stop_cond = true,
+            cb_type cb = nullptr,
+            void *user_data = nullptr);
 
   /**
    * @brief Read one or more bytes from slave device - asynchronous
@@ -68,7 +71,7 @@ public:
    * @param cb Callback to call after reading finishes
    * @param user_data User data passed to callback
    */
-  bool read(volatile uint8_t *buf, int len, cb_type cb=nullptr, void *user_data=nullptr);
+  bool read(volatile uint8_t *buf, int len, cb_type cb = nullptr, void *user_data = nullptr);
 
   /**
    * @brief Aborts current operation and performs stop condition
@@ -83,8 +86,7 @@ public:
   bool is_sending() { return READ_BIT(_I2C->CR2, I2C_CR2_ITBUFEN); }
 
 private:
-  enum RW
-  {
+  enum RW {
     WRITE = 0,
     READ = 1
   };
@@ -100,7 +102,7 @@ private:
   volatile cb_type _done_cb;
   void *volatile _user_data;
 
-  volatile uint8_t * volatile _read_buf;
+  volatile uint8_t *volatile _read_buf;
 
   void start_cond(RW rw);
   void stop_cond();

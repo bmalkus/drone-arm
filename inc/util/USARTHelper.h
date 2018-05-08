@@ -3,8 +3,7 @@
 
 #include <protocol/USART.h>
 
-class USARTHelper
-{
+class USARTHelper {
 public:
   explicit USARTHelper(USART *usart_to_use);
 
@@ -32,9 +31,9 @@ private:
   void motor();
   void log();
   void pid();
-  void get_pid();
+  void printf_pid_coeffs();
 
-  void rx_callback(uint8_t byte, USART *USART_to_forward=nullptr);
+  void rx_callback(uint8_t byte, USART *USART_to_forward = nullptr);
 
   friend void __usart_rx_callback(void *usart_helper, uint8_t byte);
   friend void __usart_rx_bt_callback(void *usart_helper, uint8_t byte);

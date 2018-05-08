@@ -7,10 +7,8 @@
 #include <util/Timer.h>
 #include <util/misc.h>
 
-union Multipliers
-{
-  struct
-  {
+union Multipliers {
+  struct {
     int8_t pitch;
     int8_t roll;
     int8_t yaw;
@@ -18,10 +16,8 @@ union Multipliers
   int8_t data[3];
 };
 
-union Controls
-{
-  struct
-  {
+union Controls {
+  struct {
     float pitch;
     float roll;
     float yaw;
@@ -30,8 +26,7 @@ union Controls
   float data[4];
 };
 
-class Motor
-{
+class Motor {
 public:
   Motor(PWM *pwm, uint8_t channel, Multipliers multipliers);
 

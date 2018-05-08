@@ -3,15 +3,13 @@
 #include <cstring>
 #include <stm32f446xx.h>
 
-USART::USART(USART_TypeDef *USART, uint32_t baud_rate):
-  _USART(USART),
-  _baud_rate(baud_rate)
-{
+USART::USART(USART_TypeDef *USART, uint32_t baud_rate) :
+    _USART(USART),
+    _baud_rate(baud_rate) {
   // empty
 }
 
-void USART::init()
-{
+void USART::init() {
   // Configure baud rate
   // first, compute desired usartdiv - transformed formula from documentation, and multiply by 100
   uint32_t usartdiv = (45000000u * 25u) / (4u * _baud_rate); // (f_apb1 / (16 * baud)) * 100
@@ -26,10 +24,10 @@ void USART::init()
   mant += overflow;
   frac -= overflow;
   MODIFY_REG(
-    _USART->BRR,
-    USART_BRR_DIV_Fraction | USART_BRR_DIV_Mantissa,
-    mant << USART_BRR_DIV_Mantissa_Pos |
-    frac << USART_BRR_DIV_Fraction_Pos
+      _USART->BRR,
+      USART_BRR_DIV_Fraction | USART_BRR_DIV_Mantissa,
+      mant << USART_BRR_DIV_Mantissa_Pos |
+          frac << USART_BRR_DIV_Fraction_Pos
   );
 
   // Enable TX and RX
@@ -46,8 +44,7 @@ void USART::init()
   SET_BIT(_USART->CR1, USART_CR1_RXNEIE);
 }
 
-void USART::send(uint8_t to_send)
-{
+void USART::send(uint8_t to_send) {
   __disable_irq();
   _out_buffer[_queue_at++] = to_send;
   _queue_at %= 256;
@@ -55,12 +52,10 @@ void USART::send(uint8_t to_send)
   __enable_irq();
 }
 
-void USART::send(const char *to_send, cb_type cb, void *user_data)
-{
+void USART::send(const char *to_send, cb_type cb, void *user_data) {
   _done_cb = cb;
   _done_cb_user_data = user_data;
-  while (*to_send)
-  {
+  while (*to_send) {
     __disable_irq();
     _out_buffer[_queue_at++] = *to_send++;
     _queue_at %= 256;
@@ -69,41 +64,32 @@ void USART::send(const char *to_send, cb_type cb, void *user_data)
   }
 }
 
-void USART::set_rx_callback(rx_cb_type cb, void *user_data)
-{
+void USART::set_rx_callback(rx_cb_type cb, void *user_data) {
   _rx_cb = cb;
   _rx_cb_user_data = user_data;
 }
 
-rx_cb_type USART::clear_rx_callback()
-{
+rx_cb_type USART::clear_rx_callback() {
   rx_cb_type ret = _rx_cb;
   _rx_cb = nullptr;
   _rx_cb_user_data = nullptr;
   return ret;
 }
 
-void USART::handle_event(HandlerHelper::InterruptType /*itype*/)
-{
-  if (READ_BIT(_USART->SR, USART_SR_RXNE))
-  {
+void USART::handle_event(HandlerHelper::InterruptType /*itype*/) {
+  if (READ_BIT(_USART->SR, USART_SR_RXNE)) {
     // received bit
     if (_rx_cb != nullptr)
       _rx_cb(_rx_cb_user_data, static_cast<uint8_t>(_USART->DR));
     else
       CLEAR_BIT(_USART->SR, USART_SR_RXNE);
-  }
-  else
-  {
+  } else {
     // sent bit
-    if (_queue_at != _send_from)
-    {
+    if (_queue_at != _send_from) {
       _USART->DR = _out_buffer[_send_from++];
       _send_from %= 256;
       _USART->DR; // dummy read - without it, handle_event() may improperly fire second time right after first one
-    }
-    else
-    {
+    } else {
       CLEAR_BIT(_USART->CR1, USART_CR1_TXEIE);
       if (_done_cb != nullptr)
         _done_cb(_done_cb_user_data);
@@ -117,8 +103,7 @@ void USART::handle_event(HandlerHelper::InterruptType /*itype*/)
 //  non-members
 // *****************************************************************************
 
-void __handle_uart_event(HandlerHelper::InterruptType itype, void *_usart)
-{
-  auto *usart = (USART*)_usart;
+void __handle_uart_event(HandlerHelper::InterruptType itype, void *_usart) {
+  auto *usart = (USART *) _usart;
   usart->handle_event(itype);
 }

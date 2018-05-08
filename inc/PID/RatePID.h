@@ -8,13 +8,11 @@
 #include "IOwrapper/StickInputs.h"
 #include "PID/common.h"
 
-class RatePID
-{
+class RatePID {
 public:
   RatePID();
 
-  enum PART
-  {
+  enum PART {
     P, I, D
   };
 

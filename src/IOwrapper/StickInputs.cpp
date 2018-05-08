@@ -6,15 +6,13 @@
 
 static constexpr uint32_t STICK_ACTIONS_DELAY_MS = 500;
 
-StickInputs::StickInputs(PWMInput *pwm_input):
+StickInputs::StickInputs(PWMInput *pwm_input) :
     _pwm_input(pwm_input),
-    _timer(STICK_ACTIONS_DELAY_MS)
-{
+    _timer(STICK_ACTIONS_DELAY_MS) {
   // empty
 }
 
-Sticks StickInputs::get()
-{
+Sticks StickInputs::get() {
   Sticks inputs{0.f, 0.f, 0.f, 0.f};
 
   // variable used to check against lost PWM input
@@ -26,19 +24,16 @@ Sticks StickInputs::get()
   auto th = _pwm_input->get(Sticks::THROTTLE);
   if (1000 <= th && th <= 2000)
     inputs.throttle = (th - 1000) / 1000.f;
-  else if (th == 0)
-  {
+  else if (th == 0) {
     inputs.throttle = 0.f;
     ++lost;
   }
 
-  for (auto ch : {Sticks::PITCH, Sticks::ROLL, Sticks::YAW})
-  {
+  for (auto ch : {Sticks::PITCH, Sticks::ROLL, Sticks::YAW}) {
     auto val = _pwm_input->get(ch);
     if (1000 <= val && val <= 2000)
       inputs.data[ch] = (val - 1500) / 1000.f;
-    else if (val == 0)
-    {
+    else if (val == 0) {
       inputs.data[ch] = 0.f;
       ++lost;
     }
@@ -53,23 +48,20 @@ Sticks StickInputs::get()
   return inputs;
 }
 
-bool StickInputs::should_be_armed()
-{
+bool StickInputs::should_be_armed() {
   return _should_be_armed;
 }
 
-bool StickInputs::should_calibrate()
-{
+bool StickInputs::should_calibrate() {
   bool ret = false;
   if (_should_calibrate) {
-   ret = true;
-   _should_calibrate = false;
+    ret = true;
+    _should_calibrate = false;
   }
   return ret;
 }
 
-void StickInputs::arm_action(bool conditions_met)
-{
+void StickInputs::arm_action(bool conditions_met) {
   if (conditions_met) {
     if (_hold_arm_action == 0) {
       if (!_arming) {
@@ -89,8 +81,7 @@ void StickInputs::arm_action(bool conditions_met)
   }
 }
 
-void StickInputs::calibre_action(bool conditions_met)
-{
+void StickInputs::calibre_action(bool conditions_met) {
   if (conditions_met) {
     if (_hold_calib_action == 0) {
       if (!_calibrating) {

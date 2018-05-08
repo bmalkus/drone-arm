@@ -9,8 +9,7 @@
  * Note: Appropriate IO pins must be configured separately in order to PWM work properly,
  * as such configuration lays beyond this class responsibility
  */
-class PWM
-{
+class PWM {
 public:
   /**
    * @brief Constructor - does not initialize any registers

@@ -66,7 +66,7 @@ public:
    * @param failed_cb callback called when error is encountered when reading with #user_data as parameter
    *                  (currently unused)
    */
-  void read_all(cb_type done_cb=nullptr, void *user_data=nullptr, cb_type failed_cb=nullptr);
+  void read_all(cb_type done_cb = nullptr, void *user_data = nullptr, cb_type failed_cb = nullptr);
 
   /**
    * @brief Get most recent acc readings offseted by calibration result (see calibrate())

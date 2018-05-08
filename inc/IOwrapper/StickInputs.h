@@ -4,10 +4,8 @@
 #include <cstdint>
 #include <protocol/PWMInput.h>
 
-union Sticks
-{
-  struct
-  {
+union Sticks {
+  struct {
     float pitch;
     float roll;
     float yaw;
@@ -15,8 +13,7 @@ union Sticks
   };
   float data[4];
 
-  enum Channel
-  {
+  enum Channel {
     PITCH = 0,
     ROLL,
     YAW,
@@ -24,8 +21,7 @@ union Sticks
   };
 };
 
-class StickInputs
-{
+class StickInputs {
 public:
   explicit StickInputs(PWMInput *pwm_input);
 

@@ -3,8 +3,7 @@
 
 #include <IOwrapper/IMU.h>
 
-class GyroAngleFilter
-{
+class GyroAngleFilter {
 public:
   GyroAngleFilter(float gyro_sensitivity, float delay);
 
