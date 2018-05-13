@@ -3,7 +3,7 @@
 #include <cmath>
 
 static constexpr float MAX_INPUT_ANG_RATE = M_PI_2;
-static constexpr float MAX_ANG_RATE = ((250.f * M_PI) / 180.f);
+static constexpr float MAX_ANG_RATE = deg_to_rad(250.f);
 static constexpr float SCALE_MULTIPLIER = (1.f / MAX_ANG_RATE) * (1.f / 3.f);
 
 RatePID::RatePID() :

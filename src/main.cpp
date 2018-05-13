@@ -19,6 +19,7 @@
 #include <IOwrapper/StickInputs.h>
 #include <filter/GyroAngleFilter.h>
 #include "PID/AnglePID.h"
+#include "filter/ComplementaryFilter.h"
 
 int main() {
   // Use external clock to generate HSE
@@ -244,9 +245,10 @@ int main() {
     }
   }
 
-  constexpr auto gyro_sensitivity = static_cast<float>((250.f * M_PI) / (180.f * ((1 << 15) - 1)));
+  constexpr auto gyro_sensitivity = deg_to_rad(1000.f / ((1 << 15) - 1));
 
   GyroAngleFilter gyro_filter(gyro_sensitivity, 1e-3);
+  ComplementaryFilter complementary_filter(gyro_sensitivity, 1e-3);
 
   // pwm.init();
   // pwm.start();
@@ -321,7 +323,8 @@ int main() {
     if (stick_inputs.should_calibrate()) {
       helper.send("Calibrating...");
       imu.calibrate(500);
-      gyro_filter.reset_angles();
+      // gyro_filter.reset_angles();
+      complementary_filter.reset_angles();
       const Readings gyro_off = imu.get_gyro_offset();
       const Readings acc_off = imu.get_acc_offset();
       printf("done\nOffsets:\ngyro: %3d %3d %3d\nacc: %3d %3d %3d\n",
@@ -337,9 +340,7 @@ int main() {
     gyro = imu.gyro();
     acc = imu.acc();
 
-    gyro_filter.set(gyro);
-
-    angles = gyro_filter.get_angles();
+    angles = complementary_filter.set(gyro, acc);
 
     controls = pid.process(angles, inputs);
 

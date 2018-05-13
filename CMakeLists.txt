@@ -49,6 +49,6 @@ set(SOURCE_FILES
         src/protocol/USART.cpp
         src/util/USARTHelper.cpp
         src/util/misc.cpp
-        startup/startup_stm32f446xx.s src/IOwrapper/StickInputs.cpp inc/IOwrapper/StickInputs.h inc/PID/common.h src/util/Context.cpp src/PID/AnglePID.cpp inc/PID/AnglePID.h)
+        startup/startup_stm32f446xx.s src/IOwrapper/StickInputs.cpp inc/IOwrapper/StickInputs.h inc/PID/common.h src/util/Context.cpp src/PID/AnglePID.cpp inc/PID/AnglePID.h src/filter/ComplementaryFilter.cpp src/filter/ComplementaryFilter.h)
 
 add_executable(HelloWorld ${SOURCE_FILES})

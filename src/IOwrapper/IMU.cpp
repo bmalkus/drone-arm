@@ -2,6 +2,7 @@
 #include <util/misc.h>
 #include <util/Timer.h>
 #include <cstdio>
+#include <cmath>
 
 IMU::IMU(I2C *i2c) :
     _i2c(i2c) {
@@ -126,9 +127,11 @@ Readings IMU::raw_gyro() {
 void IMU::calibrate(uint32_t probes) {
   int32_t gyro_off[3] = {0, 0, 0};
   int32_t acc_off[3] = {0, 0, 0};
+
   while (_i2c->is_sending());
+
   uint32_t calibration = probes;
-  while (calibration > 0) {
+  for ( ; calibration > 0; --calibration) {
     read_all();
     while (is_busy());
     Readings g = raw_gyro();
@@ -137,15 +140,35 @@ void IMU::calibrate(uint32_t probes) {
       gyro_off[i] += g.data16[i];
       acc_off[i] += a.data16[i];
     }
-    calibration -= 1;
-    Delay(5);
+    Timer::sleep(2);
   }
+
+  for (int32_t& i : gyro_off) {
+    i /= int32_t(probes);
+  }
+
+  uint8_t max_ind = 0;
+  int32_t max = std::abs(acc_off[0]);
+  for (uint8_t i = 1; i < 3; ++i) {
+    if (acc_off[i] > max) {
+      max_ind = i;
+      max = std::abs(acc_off[i]);
+    }
+  }
+
   for (uint8_t i = 0; i < 3; ++i) {
-    gyro_off[i] /= int32_t(probes);
-    acc_off[i] /= int32_t(probes);
+    if (i != max_ind) {
+      _acc_offset.data16[i] = static_cast<int16_t>(acc_off[i] / int32_t(probes));
+    } else {
+      _acc_offset.data16[i] = 0;
+    }
   }
-  _gyro_offset = {{(int16_t) gyro_off[0], (int16_t) gyro_off[1], (int16_t) gyro_off[2]}};
-  _acc_offset = {{(int16_t) acc_off[0], (int16_t) acc_off[1], (int16_t) acc_off[2]}};
+
+  _gyro_offset = {{
+      static_cast<int16_t>(gyro_off[0]),
+      static_cast<int16_t>(gyro_off[1]),
+      static_cast<int16_t>(gyro_off[2])
+  }};
 }
 
 const Readings &IMU::get_gyro_offset() const {
