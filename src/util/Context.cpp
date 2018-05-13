@@ -16,4 +16,10 @@ Controls *Context::controls = nullptr;
 
 Sticks *Context::inputs = nullptr;
 
+StickInputs *Context::stick_inputs = nullptr;
+
 AnglePID *Context::pid = nullptr;
+
+Readings *Context::gyro = nullptr;
+
+Readings *Context::acc = nullptr;

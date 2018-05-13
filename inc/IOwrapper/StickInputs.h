@@ -4,6 +4,8 @@
 #include <cstdint>
 #include <protocol/PWMInput.h>
 
+#include <util/USARTHelper.h>
+
 union Sticks {
   struct {
     float pitch;
@@ -39,6 +41,8 @@ private:
 
   void arm_action(bool conditions_met);
   void calibre_action(bool conditions_met);
+
+  friend class USARTHelper;
 };
 
 

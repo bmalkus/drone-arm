@@ -17,7 +17,7 @@ void AnglePID::set_coeff(AnglePID::PART part, float coeff) {
 }
 
 float AnglePID::get_coeff(AnglePID::PART part) {
-  return _coeffs.data[part];
+  return _coeffs.data[part] / SCALE_MULTIPLIER;
 }
 
 Controls AnglePID::process(EulerianAngles &angles, Sticks &inputs) {

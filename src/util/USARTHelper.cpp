@@ -5,6 +5,7 @@
 #include <cstring>
 #include <cstdio>
 #include <cstdlib>
+#include <cmath>
 
 const char *USARTHelper::delimit_tokens = " \r\n";
 
@@ -32,19 +33,18 @@ void USARTHelper::next_loop_iter() {
     if (_log_controls)
       printf("%.04f %.04f %.04f\n", Context::controls->roll, Context::controls->pitch, Context::controls->yaw);
     if (_log_inputs)
-      printf(
-          "%.02f %.02f %.02f %.02f\n", Context::inputs->throttle, Context::inputs->roll, Context::inputs
-              ->pitch, Context::inputs->yaw
-      );
+      printf("%.02f %.02f %.02f %.02f\n", Context::inputs->throttle, Context::inputs->roll, Context::inputs ->pitch, Context::inputs->yaw);
     if (_log_angles)
-      printf(
-          "%.04f %.04f %.04f\n", Context::eulerian_angles->x, Context::eulerian_angles->y, Context::eulerian_angles->z
-      );
+      printf("%.04f %.04f %.04f\n", Context::eulerian_angles->x * 180.f / M_PI, Context::eulerian_angles->y * 180.f / M_PI, Context::eulerian_angles->z * 180.f / M_PI);
+    if (_log_gyro)
+      printf("%d %d %d\n", Context::gyro->x, Context::gyro->y, Context::gyro->z);
+    if (_log_acc)
+      printf("%d %d %d\n", Context::acc->x, Context::acc->y, Context::acc->z);
   }
 }
 
 void USARTHelper::main_menu() {
-  static const char *help = "Available commands: bt uart motor log pid\n";
+  static const char *help = "Available commands: bt uart motor log pid imu\n";
 
   char *main_cmd = strtok(_buffer, delimit_tokens);
   if (!main_cmd)
@@ -59,6 +59,8 @@ void USARTHelper::main_menu() {
     log();
   else if (strcmp(main_cmd, "pid") == 0)
     pid();
+  else if (strcmp(main_cmd, "imu") == 0)
+    imu();
   else
     _usart->send(help);
 }
@@ -138,7 +140,7 @@ void USARTHelper::motor() {
 }
 
 void USARTHelper::log() {
-  static const char *help = "Available subcommands: inputs angles controls\n";
+  static const char *help = "Available subcommands: inputs angles controls gyro acc\n";
 
   char *subcmd = strtok(nullptr, delimit_tokens);
   if (!subcmd)
@@ -149,6 +151,10 @@ void USARTHelper::log() {
     _log_angles = !_log_angles;
   else if (strcmp(subcmd, "controls") == 0)
     _log_controls = !_log_controls;
+  else if (strcmp(subcmd, "gyro") == 0)
+    _log_gyro = !_log_gyro;
+  else if (strcmp(subcmd, "acc") == 0)
+    _log_acc = !_log_acc;
   else
     _usart->send(help);
 }
@@ -177,13 +183,13 @@ void USARTHelper::pid() {
       printf("Value must be float > 0");
       return;
     }
-    if (strcmp(part, "P") == 0) {
+    if (strcmp(part, "p") == 0) {
       Context::pid->set_coeff(AnglePID::P, f);
       printf_pid_coeffs();
-    } else if (strcmp(part, "I") == 0) {
+    } else if (strcmp(part, "i") == 0) {
       Context::pid->set_coeff(AnglePID::I, f);
       printf_pid_coeffs();
-    } else if (strcmp(part, "D") == 0) {
+    } else if (strcmp(part, "d") == 0) {
       Context::pid->set_coeff(AnglePID::D, f);
       printf_pid_coeffs();
     } else {
@@ -199,6 +205,17 @@ void USARTHelper::printf_pid_coeffs() {
   printf(
       " %.05f | %.05f | %.05f\n", Context::pid->get_coeff(AnglePID::P), Context::pid
           ->get_coeff(AnglePID::I), Context::pid->get_coeff(AnglePID::D));
+}
+
+void USARTHelper::imu() {
+  static const char *help = "Available subcommands: calib\n";
+
+  char *subcmd = strtok(nullptr, delimit_tokens);
+  if (!subcmd) {
+    printf(help);
+  } else if (strcmp(subcmd, "calib") == 0) {
+    Context::stick_inputs->_should_calibrate = true;
+  }
 }
 
 void USARTHelper::rx_callback(uint8_t byte, USART *USART_to_forward) {

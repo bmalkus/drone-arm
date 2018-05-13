@@ -17,7 +17,10 @@ struct Context {
   static EulerianAngles *eulerian_angles;
   static Controls *controls;
   static Sticks *inputs;
+  static StickInputs *stick_inputs;
   static AnglePID *pid;
+  static Readings *gyro;
+  static Readings *acc;
 };
 
 #endif /* CONTEXT_H */

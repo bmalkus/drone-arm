@@ -39,8 +39,10 @@ Sticks StickInputs::get() {
     }
   }
 
-  if (lost >= 3)
+  if (lost >= 3) {
+    _should_be_armed = false;
     return {0.f, 0.f, 0.f, 0.f};
+  }
 
   arm_action(inputs.throttle < 0.3f && inputs.yaw > 0.3f && inputs.pitch < -0.3f && inputs.roll < -0.3f);
   calibre_action(inputs.throttle < 0.3f && inputs.yaw < -0.3f && inputs.pitch < -0.3f && inputs.roll < -0.3f);

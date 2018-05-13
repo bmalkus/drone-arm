@@ -68,3 +68,8 @@ void Timer::tim_event_handler() {
 void __timer_tim_event_handler(HandlerHelper::InterruptType /*itype*/, void */*unused*/) {
   Timer::tim_event_handler();
 }
+
+void Timer::sleep(uint32_t ms) {
+  auto end_millis = millis() + ms;
+  while (millis() < end_millis);
+}

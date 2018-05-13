@@ -156,8 +156,26 @@ int main() {
   NVIC_EnableIRQ(TIM5_IRQn);
   NVIC_EnableIRQ(TIM8_CC_IRQn);
 
+  Timer::init();
+
   // Set I2C pins
   // PB8 PB9
+  MODIFY_REG(GPIOB->MODER, GPIO_MODER_MODE8, 0b01 << GPIO_MODER_MODE8_Pos);
+  CLEAR_BIT(GPIOB->OTYPER, GPIO_OTYPER_OT8);
+
+  MODIFY_REG(GPIOB->MODER, GPIO_MODER_MODE9, 0b01 << GPIO_MODER_MODE9_Pos);
+  CLEAR_BIT(GPIOB->OTYPER, GPIO_OTYPER_OT9);
+
+  SET_BIT(GPIOB->ODR, GPIO_ODR_OD9);
+  for (int i = 0; i < 10; ++i) {
+    SET_BIT(GPIOB->ODR, GPIO_ODR_OD8);
+    Timer::sleep(2);
+    CLEAR_BIT(GPIOB->ODR, GPIO_ODR_OD8);
+    Timer::sleep(2);
+  }
+
+  Timer::sleep(1000);
+
   MODIFY_REG(GPIOB->MODER, GPIO_MODER_MODE8, 0b10 << GPIO_MODER_MODE8_Pos);
   SET_BIT(GPIOB->OTYPER, GPIO_OTYPER_OT8);
   MODIFY_REG(GPIOB->PUPDR, GPIO_PUPDR_PUPD8, 0b01 << GPIO_PUPDR_PUPD8_Pos);
@@ -199,29 +217,30 @@ int main() {
   MODIFY_REG(GPIOC->MODER, GPIO_MODER_MODE9, 0b10 << GPIO_MODER_MODE9_Pos);
   MODIFY_REG(GPIOC->AFR[1], GPIO_AFRH_AFSEL9, 0b0010 << GPIO_AFRH_AFSEL9_Pos);
 
-  Timer::init();
-
   USART uart_usb(USART2, 115200);
   USART uart_bt(USART3, 115200);
   uart_usb.init();
   uart_bt.init();
 
-  USARTHelper helper(&uart_bt);
+  USARTHelper helper(&uart_usb);
 
-  I2C mpu(I2C1);
-  IMU imu(&mpu);
+  I2C i2c(I2C1);
+  IMU imu(&i2c);
+
   imu.init();
 
   PWM pwm(TIM1, 200, 5000, 4);
 
   PWMInput main_inputs(TIM3, 1'000'000, 4);
 
-  Timer _imu_init(300);
-
   while (!imu.ready_to_read()) {
-    if (!_imu_init) {
+    if (READ_BIT(I2C1->SR1, I2C_SR1_AF)) {
+      Timer::sleep(1000);
+      CLEAR_BIT(I2C1->SR1, I2C_SR1_AF);
+      i2c.abort_sending();
+      // i2c.disable();
+      imu.swreset(1000);
       imu.init();
-      _imu_init.restart();
     }
   }
 
@@ -229,11 +248,11 @@ int main() {
 
   GyroAngleFilter gyro_filter(gyro_sensitivity, 1e-3);
 
-  pwm.init();
-  pwm.start();
+  // pwm.init();
+  // pwm.start();
 
-  main_inputs.init();
-  main_inputs.start();
+  // main_inputs.init();
+  // main_inputs.start();
   StickInputs stick_inputs(&main_inputs);
 
   Motor motors[4] = {
@@ -253,6 +272,7 @@ int main() {
   AnglePID pid;
 
   Readings gyro;
+  Readings acc;
   EulerianAngles angles;
   Controls controls;
 
@@ -267,7 +287,10 @@ int main() {
   Context::eulerian_angles = &angles;
   Context::controls = &controls;
   Context::inputs = &inputs;
+  Context::stick_inputs = &stick_inputs;
   Context::pid = &pid;
+  Context::gyro = &gyro;
+  Context::acc = &acc;
   for (int i = 0; i < 4; ++i)
     Context::motors[i] = &motors[i];
 #pragma clang diagnostic pop
@@ -283,7 +306,7 @@ int main() {
   for (;;) {
     imu.read_all();
 
-    inputs = stick_inputs.get();
+    // inputs = stick_inputs.get();
 
     if (stick_inputs.should_be_armed() && !motors[0].armed()) {
       helper.send("Arming\n");
@@ -297,9 +320,14 @@ int main() {
 
     if (stick_inputs.should_calibrate()) {
       helper.send("Calibrating...");
-      imu.calibrate(100);
+      imu.calibrate(500);
       gyro_filter.reset_angles();
-      helper.send("done\n");
+      const Readings gyro_off = imu.get_gyro_offset();
+      const Readings acc_off = imu.get_acc_offset();
+      printf("done\nOffsets:\ngyro: %3d %3d %3d\nacc: %3d %3d %3d\n",
+             gyro_off.x, gyro_off.y, gyro_off.z,
+             acc_off.x, acc_off.y, acc_off.z
+      );
     }
 
     // wait for sensors data to be read
@@ -307,6 +335,7 @@ int main() {
     //   ;
 
     gyro = imu.gyro();
+    acc = imu.acc();
 
     gyro_filter.set(gyro);
 

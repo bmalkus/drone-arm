@@ -56,8 +56,10 @@ public:
 
   static TIM_TypeDef *_TIM; //!< CMSIS timer structure for timer whose counter will be used
 
-private:
+  static void sleep(uint32_t ms);
+
   volatile static uint32_t _millis;
+private:
 
   volatile uint32_t _end_millis;
   volatile uint32_t _end_micros;

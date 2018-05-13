@@ -22,7 +22,11 @@ private:
 
   bool _bt_passthrough;
 
-  bool _log_inputs = false, _log_controls = false, _log_angles = false;
+  bool _log_inputs = false;
+  bool _log_controls = false;
+  bool _log_angles = false;
+  bool _log_gyro = false;
+  bool _log_acc = false;
 
   void main_menu();
 
@@ -32,6 +36,7 @@ private:
   void log();
   void pid();
   void printf_pid_coeffs();
+  void imu();
 
   void rx_callback(uint8_t byte, USART *USART_to_forward = nullptr);
 

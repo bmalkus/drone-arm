@@ -32,6 +32,9 @@ public:
    */
   void init(uint32_t APB_freq_MHz, bool fs, uint8_t duty);
 
+  void enable();
+  void disable();
+
   /**
    * @brief Sets address of slave device to communicate with
    *
@@ -39,15 +42,6 @@ public:
    */
   void set_addr(uint8_t addr);
 
-  /**
-   * @brief Sends single byte of data to slave device - asynchronous
-   *
-   * @param byte Byte to send
-   * @param do_stop_cond Indicates if stop condition should be performed after sending
-   * @param cb Callback to call after sending finishes
-   * @param user_data User data passed to callback
-   */
-  bool send(uint8_t byte, bool do_stop_cond = true, cb_type cb = nullptr, void *user_data = nullptr);
   /**
    * @brief Send stream of bytes to slave device - asynchronous
    *
@@ -57,7 +51,7 @@ public:
    * @param cb Callback to call after sending finishes
    * @param user_data User data passed to callback
    */
-  bool send(const uint8_t *bytes,
+  bool send(const volatile uint8_t *bytes,
             uint8_t len,
             bool do_stop_cond = true,
             cb_type cb = nullptr,
@@ -83,29 +77,39 @@ public:
    *
    * @return true if I2C is currently sending, false otherwise
    */
-  bool is_sending() { return READ_BIT(_I2C->CR2, I2C_CR2_ITBUFEN); }
+  bool is_sending() { return _current_state != NO_TRANSMISSION; }
 
+  void swreset(uint32_t delay_ms);
 private:
   enum RW {
     WRITE = 0,
     READ = 1
   };
 
+  enum STATE {
+    START_COND,
+    ADDR,
+    DATA,
+    NO_TRANSMISSION
+  };
+
   I2C_TypeDef *_I2C;
   uint8_t _slave_addr;
   volatile RW _current_rw;
+  volatile STATE _current_state = NO_TRANSMISSION;
 
-  const uint8_t *volatile _to_send;
-  volatile uint8_t _byte_to_send;
+  const volatile uint8_t * volatile _to_send;
   volatile uint8_t _len;
   volatile bool _do_stop_cond;
   volatile cb_type _done_cb;
-  void *volatile _user_data;
+  void * volatile _user_data;
 
   volatile uint8_t *volatile _read_buf;
 
   void start_cond(RW rw);
   void stop_cond();
+
+  void call_and_clear_callback();
 
   void handle_event(HandlerHelper::InterruptType itype);
 

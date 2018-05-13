@@ -108,6 +108,7 @@ public:
    */
   bool is_busy() { return _current != _chunks; }
 
+  void swreset(uint32_t delay_ms);
 private:
   I2C *_i2c;
 
@@ -115,16 +116,16 @@ private:
 
   // Structure used to simplify reading via I2C, written into _read_buf
   struct ReadChunk {
-    uint8_t reg_addr; // register address to read from
+    volatile uint8_t reg_addr; // register address to read from
     volatile uint8_t *dest; // destination to read into
-    uint8_t len; // number of bytes to read
+    volatile uint8_t len; // number of bytes to read
   };
 
   // Structure used to simplify writing via I2C, written into _send_buf
   struct SendChunk {
-    uint8_t reg_addr; // register address to write into
-    uint8_t data[8]; // data to write
-    uint8_t len; // number of bytes to write
+    volatile uint8_t reg_addr; // register address to write into
+    volatile uint8_t data[8]; // data to write
+    volatile uint8_t len; // number of bytes to write
   };
 
   /*
@@ -140,7 +141,7 @@ private:
    */
   ReadChunk _read_buf[8];
   SendChunk _send_buf[8];
-  uint8_t _chunks = 0;
+  volatile uint8_t _chunks = 0;
   volatile uint8_t _current = 0;
 
   // Double buffering, so that readings are available whole the time
@@ -152,6 +153,10 @@ private:
 
   // Offsets set on calibration
   Readings _gyro_offset = {{0, 0, 0}};
+public:
+  const Readings &get_gyro_offset() const;
+  const Readings &get_acc_offset() const;
+private:
   Readings _acc_offset = {{0, 0, 0}};
 
   // Used to store user provided callbacks by read_all() or _send_from_buf
