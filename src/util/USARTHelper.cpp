@@ -34,8 +34,8 @@ void USARTHelper::next_loop_iter() {
       printf("%.04f %.04f %.04f\n", Context::controls->roll, Context::controls->pitch, Context::controls->yaw);
     if (_log_inputs)
       printf("%.02f %.02f %.02f %.02f\n", Context::inputs->throttle, Context::inputs->roll, Context::inputs ->pitch, Context::inputs->yaw);
-    if (_log_angles)
-      printf("%.04f %.04f %.04f\n", rad_to_deg(Context::eulerian_angles->x), rad_to_deg(Context::eulerian_angles->y), rad_to_deg(Context::eulerian_angles->z));
+    if (_log_filtered)
+      printf("%.04f %.04f %.04f\n", rad_to_deg(Context::filtered_readings->angles.roll), rad_to_deg(Context::filtered_readings->angles.pitch), rad_to_deg(Context::filtered_readings->yaw_rate));
     if (_log_gyro)
       printf("%d %d %d\n", Context::gyro->x, Context::gyro->y, Context::gyro->z);
     if (_log_acc)
@@ -140,15 +140,15 @@ void USARTHelper::motor() {
 }
 
 void USARTHelper::log() {
-  static const char *help = "Available subcommands: inputs angles controls gyro acc\n";
+  static const char *help = "Available subcommands: inputs filtered controls gyro acc\n";
 
   char *subcmd = strtok(nullptr, delimit_tokens);
   if (!subcmd)
     printf(help);
   else if (strcmp(subcmd, "inputs") == 0)
     _log_inputs = !_log_inputs;
-  else if (strcmp(subcmd, "angles") == 0)
-    _log_angles = !_log_angles;
+  else if (strcmp(subcmd, "filtered") == 0)
+    _log_filtered = !_log_filtered;
   else if (strcmp(subcmd, "controls") == 0)
     _log_controls = !_log_controls;
   else if (strcmp(subcmd, "gyro") == 0)

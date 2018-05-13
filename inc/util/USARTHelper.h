@@ -24,7 +24,7 @@ private:
 
   bool _log_inputs = false;
   bool _log_controls = false;
-  bool _log_angles = false;
+  bool _log_filtered = false;
   bool _log_gyro = false;
   bool _log_acc = false;
 

@@ -10,7 +10,7 @@ Motor *Context::motors[4] = {nullptr, nullptr, nullptr, nullptr};
 
 Readings *Context::readings = nullptr;
 
-EulerianAngles *Context::eulerian_angles = nullptr;
+FilteredReadings *Context::filtered_readings = nullptr;
 
 Controls *Context::controls = nullptr;
 

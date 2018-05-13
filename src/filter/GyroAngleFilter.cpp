@@ -15,11 +15,11 @@ void GyroAngleFilter::set(const Readings &gyro) {
       gyro.z * _gyro_sensitivity * _delay
   };
 
-  _angles.x += _gyro[0] + _gyro[1] * sin(_angles.y) * tan(_angles.y) + _gyro[2] * cos(_angles.x) * tan(_angles.y);
-  _angles.y += _gyro[1] * cos(_angles.x) - _gyro[2] * sin(_angles.x);
-  _angles.z += _gyro[1] * sin(_angles.x) / cos(_angles.y) + _gyro[2] * cos(_angles.x) / cos(_angles.y);
+  _readings.angles.roll += _gyro[0] + _gyro[1] * sin(_readings.angles.pitch) * tan(_readings.angles.pitch) + _gyro[2] * cos(_readings.angles.roll) * tan(_readings.angles.pitch);
+  _readings.angles.pitch += _gyro[1] * cos(_readings.angles.roll) - _gyro[2] * sin(_readings.angles.roll);
+  _readings.yaw_rate += _gyro[1] * sin(_readings.angles.roll) / cos(_readings.angles.pitch) + _gyro[2] * cos(_readings.angles.roll) / cos(_readings.angles.pitch);
 
-  for (float &ang : _angles.data) {
+  for (float &ang : _readings.data) {
     if (ang > M_PI)
       ang -= 2 * M_PI;
     else if (ang < -M_PI)
@@ -27,10 +27,10 @@ void GyroAngleFilter::set(const Readings &gyro) {
   }
 }
 
-EulerianAngles GyroAngleFilter::get_angles() {
-  return _angles;
+FilteredReadings GyroAngleFilter::get_angles() {
+  return _readings;
 }
 
 void GyroAngleFilter::reset_angles() {
-  _angles = {{0.f, 0.f, 0.f}};
+  _readings = {{0.f, 0.f, 0.f}};
 }

@@ -7,9 +7,9 @@ class ComplementaryFilter {
 public:
   ComplementaryFilter(float gyro_sensitivity, float delay);
 
-  const EulerianAngles& set(const Readings& gyro, const Readings& acc);
+  const FilteredReadings& set(const Readings& gyro, const Readings& acc);
 
-  const EulerianAngles& get_angles();
+  const FilteredReadings& get_angles();
 
   void reset_angles();
 
@@ -17,7 +17,9 @@ private:
   const float _gyro_sensitivity;
   const float _delay;
 
-  EulerianAngles _angles{{0.f, 0.f, 0.f}};
+  FilteredReadings _readings{{0.f, 0.f, 0.f}};
+
+  float _prev_yaw = 0.f;
 };
 
 

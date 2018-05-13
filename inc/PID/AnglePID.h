@@ -18,12 +18,12 @@ public:
   void set_coeff(PART part, float coeff);
   float get_coeff(PART part);
 
-  Controls process(EulerianAngles &angles, Sticks &inputs);
+  Controls process(FilteredReadings &angles, Sticks &inputs);
 
 private:
   Coefficients _coeffs;
 
-  EulerianAngles _errors[2];
+  FilteredReadings _errors[2];
   uint8_t _curr_errors = 0;
 
   AngularRates _cumulated_error = {{0.f, 0.f, 0.f}};

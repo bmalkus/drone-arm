@@ -20,7 +20,7 @@ float AnglePID::get_coeff(AnglePID::PART part) {
   return _coeffs.data[part] / SCALE_MULTIPLIER;
 }
 
-Controls AnglePID::process(EulerianAngles &angles, Sticks &inputs) {
+Controls AnglePID::process(FilteredReadings &angles, Sticks &inputs) {
   _curr_errors = 1 - _curr_errors;
 
   Controls ret{{0.f, 0.f, 0.f, inputs.throttle}};

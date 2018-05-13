@@ -275,7 +275,7 @@ int main() {
 
   Readings gyro;
   Readings acc;
-  EulerianAngles angles;
+  FilteredReadings angles;
   Controls controls;
 
   Sticks inputs;
@@ -286,7 +286,7 @@ int main() {
   Context::uart_bt = &uart_bt;
   Context::usart_helper = &helper;
   Context::readings = &gyro;
-  Context::eulerian_angles = &angles;
+  Context::filtered_readings = &angles;
   Context::controls = &controls;
   Context::inputs = &inputs;
   Context::stick_inputs = &stick_inputs;

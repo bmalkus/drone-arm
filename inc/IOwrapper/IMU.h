@@ -14,9 +14,16 @@ union Readings {
   volatile int16_t data16[3];
 };
 
-union EulerianAngles {
+
+struct EulerianAngles {
+  float roll;
+  float pitch;
+};
+
+union FilteredReadings {
   struct {
-    float x, y, z;
+    EulerianAngles angles;
+    float yaw_rate;
   };
   float data[3];
 };

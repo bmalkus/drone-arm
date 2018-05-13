@@ -14,7 +14,7 @@ struct Context {
   static USARTHelper *usart_helper;
   static Motor *motors[4];
   static Readings *readings;
-  static EulerianAngles *eulerian_angles;
+  static FilteredReadings *filtered_readings;
   static Controls *controls;
   static Sticks *inputs;
   static StickInputs *stick_inputs;
