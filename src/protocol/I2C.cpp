@@ -148,10 +148,10 @@ bool I2C::read(volatile uint8_t *buf, int len, cb_type cb, void *user_data) {
 
 void I2C::start_cond(volatile RW rw) {
   _current_rw = rw;
+  _current_state = START_COND;
   SET_BIT(_I2C->CR2, I2C_CR2_ITEVTEN);
   SET_BIT(_I2C->CR1, I2C_CR1_START);
   _I2C->CR1;
-  _current_state = START_COND;
 }
 
 void I2C::abort_sending() {

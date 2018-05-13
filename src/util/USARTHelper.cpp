@@ -179,8 +179,8 @@ void USARTHelper::pid() {
       return;
     }
     float f = strtof(val, nullptr);
-    if (f == 0.f) {
-      printf("Value must be float > 0");
+    if (f < 0.f) {
+      printf("Value must be float >= 0");
       return;
     }
     if (strcmp(part, "p") == 0) {

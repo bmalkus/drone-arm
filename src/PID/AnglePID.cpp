@@ -7,7 +7,7 @@ static constexpr float MAX_ANGLE = M_PI;
 static constexpr float SCALE_MULTIPLIER = (1.f / MAX_ANGLE) * (1.f / 3.f);
 
 AnglePID::AnglePID() :
-    _coeffs{{1.f, 1.f, 1.f}} {
+    _coeffs{{1.f, 0.f, 0.f}} {
   for (float &c : _coeffs.data)
     c *= SCALE_MULTIPLIER;
 }
@@ -31,17 +31,17 @@ Controls AnglePID::process(FilteredReadings &angles, Sticks &inputs) {
     // P part
     ret.data[i] += _errors[_curr_errors].data[i] * _coeffs.P;
 
-    // // D part
-    // ret.data[i] += (_errors[_curr_errors].data[i] - _errors[1-_curr_errors].data[i]) * _coeffs.D;
+    // D part
+    ret.data[i] += (_errors[_curr_errors].data[i] - _errors[1-_curr_errors].data[i]) * _coeffs.D;
 
-    // // I part
-    // _cumulated_error.data[i] = clamp(_cumulated_error.data[i] + _errors[_curr_errors].data[i], -MAX_ANG_RATE, MAX_ANG_RATE);
-    // if (std::abs(inputs.data[i] - _prev_inputs.data[i]))
-    //   _cumulated_error.data[i] = 0.f;
+    // I part
+    _cumulated_error.data[i] = clamp(_cumulated_error.data[i] + _errors[_curr_errors].data[i], -MAX_ANGLE, MAX_ANGLE);
+    if (std::abs(inputs.data[i] - _prev_inputs.data[i]) > 1.f)
+      _cumulated_error.data[i] = 0.f;
 
-    // _prev_inputs.data[i] = inputs.data[i];
+    _prev_inputs.data[i] = inputs.data[i];
 
-    // ret.data[i] += _cumulated_error.data[i] * _coeffs.I;
+    ret.data[i] += _cumulated_error.data[i] * _coeffs.I;
   }
 
   return ret;

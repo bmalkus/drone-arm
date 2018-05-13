@@ -18,6 +18,7 @@
 #include <util/misc.h>
 #include <IOwrapper/StickInputs.h>
 #include <filter/GyroAngleFilter.h>
+#include <stm32f446xx.h>
 #include "PID/AnglePID.h"
 #include "filter/ComplementaryFilter.h"
 
@@ -223,7 +224,7 @@ int main() {
   uart_usb.init();
   uart_bt.init();
 
-  USARTHelper helper(&uart_usb);
+  USARTHelper helper(&uart_bt);
 
   I2C i2c(I2C1);
   IMU imu(&i2c);
@@ -239,7 +240,6 @@ int main() {
       Timer::sleep(1000);
       CLEAR_BIT(I2C1->SR1, I2C_SR1_AF);
       i2c.abort_sending();
-      // i2c.disable();
       imu.swreset(1000);
       imu.init();
     }
@@ -247,14 +247,14 @@ int main() {
 
   constexpr auto gyro_sensitivity = deg_to_rad(1000.f / ((1 << 15) - 1));
 
-  GyroAngleFilter gyro_filter(gyro_sensitivity, 1e-3);
+  // GyroAngleFilter gyro_filter(gyro_sensitivity, 1e-3);
   ComplementaryFilter complementary_filter(gyro_sensitivity, 1e-3);
 
-  // pwm.init();
-  // pwm.start();
+  pwm.init();
+  pwm.start();
 
-  // main_inputs.init();
-  // main_inputs.start();
+  main_inputs.init();
+  main_inputs.start();
   StickInputs stick_inputs(&main_inputs);
 
   Motor motors[4] = {
@@ -302,13 +302,13 @@ int main() {
 
   Timer loop_timer(0, 999);
 
-  motors[2].disable();
-  motors[3].disable();
+  // motors[2].disable();
+  // motors[3].disable();
 
   for (;;) {
     imu.read_all();
 
-    // inputs = stick_inputs.get();
+    inputs = stick_inputs.get();
 
     if (stick_inputs.should_be_armed() && !motors[0].armed()) {
       helper.send("Arming\n");
