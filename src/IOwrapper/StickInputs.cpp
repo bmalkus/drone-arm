@@ -39,7 +39,7 @@ Sticks StickInputs::get() {
     }
   }
 
-  if (lost >= 3) {
+  if (lost >= 3 && !_ignore_disabled_tx) {
     _should_be_armed = false;
     return {0.f, 0.f, 0.f, 0.f};
   }
@@ -71,6 +71,7 @@ void StickInputs::arm_action(bool conditions_met) {
         _timer.restart();
       } else if (!_timer) {
         _should_be_armed = !_should_be_armed;
+        _ignore_disabled_tx = false;
         _hold_arm_action = 100;
       }
     } else {

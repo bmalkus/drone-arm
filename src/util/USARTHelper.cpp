@@ -44,7 +44,7 @@ void USARTHelper::next_loop_iter() {
 }
 
 void USARTHelper::main_menu() {
-  static const char *help = "Available commands: bt uart motor log pid imu\n";
+  static const char *help = "Available commands: bt uart motor log pid imu input\n";
 
   char *main_cmd = strtok(_buffer, delimit_tokens);
   if (!main_cmd)
@@ -61,6 +61,8 @@ void USARTHelper::main_menu() {
     pid();
   else if (strcmp(main_cmd, "imu") == 0)
     imu();
+  else if (strcmp(main_cmd, "input") == 0)
+    input();
   else
     _usart->send(help);
 }
@@ -102,12 +104,14 @@ void USARTHelper::uart() {
 }
 
 void USARTHelper::motor() {
-  static const char *help = "Available subcommands: enable disable\n";
+  static const char *help = "Available subcommands: enable disable toggle[arming state]\n";
 
   char *subcmd = strtok(nullptr, delimit_tokens);
   if (!subcmd)
     printf(help);
-  else {
+  else if (strcmp(subcmd, "toggle") == 0) {
+    Context::stick_inputs->_should_be_armed = !Context::stick_inputs->_should_be_armed;
+  } else {
     bool enable = (strcmp(subcmd, "enable") == 0);
     bool disable = (strcmp(subcmd, "disable") == 0);
     if (enable || disable) {
@@ -215,6 +219,25 @@ void USARTHelper::imu() {
     printf(help);
   } else if (strcmp(subcmd, "calib") == 0) {
     Context::stick_inputs->_should_calibrate = true;
+  } else {
+    printf(help);
+  }
+}
+
+void USARTHelper::input() {
+  static const char *help = "Available subcommands: ignore[disabled TX]\n";
+
+  char *subcmd = strtok(nullptr, delimit_tokens);
+  if (!subcmd) {
+    printf(help);
+  } else if (strcmp(subcmd, "ignore") == 0) {
+    Context::stick_inputs->_ignore_disabled_tx = !Context::stick_inputs->_ignore_disabled_tx;
+    if (Context::stick_inputs->_ignore_disabled_tx)
+      printf("WARN: ignoring disabled TX\n");
+    else
+      printf("Not ignoring disabled TX anymore\n");
+  } else {
+    printf(help);
   }
 }
 

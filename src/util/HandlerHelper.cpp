@@ -43,6 +43,10 @@ extern "C" void I2C1_EV_IRQHandler() {
   HandlerHelper::call_handler(HandlerHelper::I2C1_EV_INT);
 }
 
+extern "C" void I2C1_ER_IRQHandler() {
+  HandlerHelper::call_handler(HandlerHelper::I2C1_ER_INT);
+}
+
 extern "C" void TIM1_BRK_TIM9_IRQHandler() {
   HandlerHelper::call_handler(HandlerHelper::TIM1_BRK_TIM9_INT);
 }

@@ -37,6 +37,7 @@ private:
   void pid();
   void printf_pid_coeffs();
   void imu();
+  void input();
 
   void rx_callback(uint8_t byte, USART *USART_to_forward = nullptr);
 

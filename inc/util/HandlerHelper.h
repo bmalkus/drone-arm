@@ -12,6 +12,7 @@ extern "C" void UART4_IRQHandler();
 extern "C" void UART5_IRQHandler();
 extern "C" void USART6_IRQHandler();
 extern "C" void I2C1_EV_IRQHandler();
+extern "C" void I2C1_ER_IRQHandler();
 extern "C" void TIM1_BRK_TIM9_IRQHandler();
 extern "C" void TIM1_TRG_COM_TIM11_IRQHandler();
 extern "C" void TIM2_IRQHandler();
@@ -39,6 +40,7 @@ public:
     UART5_INT,
     USART6_INT,
     I2C1_EV_INT,
+    I2C1_ER_INT,
     TIM1_BRK_TIM9_INT,
     TIM1_TRG_COM_TIM11_INT,
     TIM2_INT,
@@ -76,6 +78,7 @@ public:
   friend void UART5_IRQHandler();
   friend void USART6_IRQHandler();
   friend void I2C1_EV_IRQHandler();
+  friend void I2C1_ER_IRQHandler();
   friend void TIM1_BRK_TIM9_IRQHandler();
   friend void TIM1_TRG_COM_TIM11_IRQHandler();
   friend void TIM2_IRQHandler();

@@ -39,6 +39,8 @@ private:
   bool _calibrating = false, _should_calibrate = false;
   uint32_t _hold_arm_action = 0, _hold_calib_action = 0;
 
+  bool _ignore_disabled_tx = false;
+
   void arm_action(bool conditions_met);
   void calibre_action(bool conditions_met);
 

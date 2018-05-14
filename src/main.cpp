@@ -151,6 +151,7 @@ int main() {
   NVIC_EnableIRQ(USART2_IRQn);
   NVIC_EnableIRQ(USART3_IRQn);
   NVIC_EnableIRQ(I2C1_EV_IRQn);
+  NVIC_EnableIRQ(I2C1_ER_IRQn);
   NVIC_EnableIRQ(TIM1_TRG_COM_TIM11_IRQn);
   NVIC_EnableIRQ(TIM2_IRQn);
   NVIC_EnableIRQ(TIM3_IRQn);

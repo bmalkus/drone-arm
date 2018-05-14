@@ -3,6 +3,7 @@
 #include <util/misc.h>
 #include <protocol/USART.h>
 #include <util/Timer.h>
+#include <stm32f446xx.h>
 
 I2C::I2C(I2C_TypeDef *I2C) :
     _I2C(I2C) {
@@ -13,6 +14,8 @@ void I2C::init(uint32_t /*APB_freq_MHz*/, bool fs, uint8_t /*I2C_freq_kHz*/) {
   // TODO: implement init properly
   CLEAR_BIT(_I2C->CR1, I2C_CR1_PE);
   READ_BIT(_I2C->CR1, I2C_CR1_PE);
+
+  SET_BIT(_I2C->CR2, I2C_CR2_ITERREN);
 
   MODIFY_REG(_I2C->CR2, I2C_CR2_FREQ, 45 << I2C_CR2_FREQ_Pos);
 
@@ -39,6 +42,7 @@ void I2C::init(uint32_t /*APB_freq_MHz*/, bool fs, uint8_t /*I2C_freq_kHz*/) {
 
   // TODO: should be generic
   HandlerHelper::set_handler(HandlerHelper::I2C1_EV_INT, __handle_i2c_event, this);
+  HandlerHelper::set_handler(HandlerHelper::I2C1_ER_INT, __handle_i2c_event, this);
 }
 
 void I2C::enable() {
@@ -123,6 +127,12 @@ void I2C::handle_event(HandlerHelper::InterruptType itype) {
         break;
       case NO_TRANSMISSION:
         break;
+    }
+  } else if (itype == HandlerHelper::I2C1_ER_INT) {
+    if (READ_BIT(_I2C->SR1, I2C_SR1_AF)) {
+      CLEAR_BIT(_I2C->SR1, I2C_SR1_AF);
+      abort_sending();
+      return;
     }
   }
 }
